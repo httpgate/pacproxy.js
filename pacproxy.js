@@ -259,8 +259,8 @@ function handleWebsite(req, res, parsed) {
 
 		log('%s %s %s ', visitorIP, req.headers.host, req.url);
 
-		if (! 'host' in headers || headers.host.split(':')[0] != pacProxy.configs.domain)  return response(res, 500);
-		if(parsed.host != 'localhost') headers.host = pacProxy.websiteParsed.host;
+		if (! 'host' in req.headers || req.headers.host.split(':')[0] != pacProxy.configs.domain)  return response(res, 500);
+		if(parsed.host != 'localhost') req.headers.host = pacProxy.websiteParsed.host;
 		var headers = filterHeader(req.headers);
 
 		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
