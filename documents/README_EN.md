@@ -3,8 +3,9 @@
 
 * 普通proxy代理服务器为防止盗用，需要用basic auth密码保护，但这就很容易被发现是代理服务器而被封锁。
 * 普通proxy代理服务器没有SSL加密，如果SSL加密的话一般浏览器也不大支持，需要利用pac url让浏览器支持ssl加密的proxy代理。
-* pacproxy js利用加密的pac url代替basic auth, 且用https加密流量，达到安全隐身的效果。
-* pacproxy js可运行在任何nodejs环境下。
+* pacproxy利用加密的pac url代替basic auth密码, 且用https加密流量，达到安全隐身的效果。
+* pacproxy在浏览器直接访问它时可以显示其它某个海外网站站点的内容
+* pacproxy可运行在任何nodejs环境下。
 
 ## 推荐
 推荐用prcproxy安全的访问以下网站：
