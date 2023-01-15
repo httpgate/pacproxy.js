@@ -34,6 +34,7 @@ const net = require('net');
 const event = require('events');
 const fs = require('fs');
 const path = require('path');
+const { transpileModule } = require('typescript');
 
 
 /**
@@ -158,6 +159,13 @@ function pacContent() {
 	return pacjs;
 }
 
+function isLocalHost($host) {
+	let $domain = $host.split(':')[0];
+	if($domain.includes('localhost') || $domain.includes('.local')) return true;
+	if($domain.startsWith('::')) $domain = $domain.slice(7);
+	if($domain.startsWith('192.') || $domain.startsWith('10.') || $domain.startsWith('172.') || $domain.startsWith('127.')) return true;
+	return false;
+}
 
 function authenticate(req, res) {
 	var visitorIP = req.socket.remoteAddress;
@@ -223,7 +231,7 @@ function requestRemote(parsed, req, res) {
 	req.socket.on('error', endRequest);
 
 	function endRequest() {
-		try{	
+		try{
 			proxyReq.end();
 			req.socket.removeListener('close', endRequest);
 			res.removeListener('finish', endRequest);
@@ -280,8 +288,9 @@ function handleRequest(req, res) {
 	if(req.url.startsWith('/')) return handleWebsite(req, res);
 	var parsed = new URL(req.url);
 	if(!parsed.host || (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
-
 	if(!authenticate(req, res)) return;
+    if(isLocalHost(parsed.host)) return response(res,403);
+
 	visitorIP = req.socket.remoteAddress;
 	
 	log('%s %s %s ', visitorIP, req.method, req.url);
@@ -316,8 +325,9 @@ function handleRequest(req, res) {
  * handle CONNECT proxy requests.
  */
 
-function handleConnect(req, socket, head) {
+function handleConnect(req, socket) {
 	if(!authenticate(req, socket)) return;
+	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
 
 	visitorIP = req.socket.remoteAddress;
 

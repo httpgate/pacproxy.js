@@ -1,5 +1,5 @@
 # pacproxy PAC加密代理服务器
-[English Readme:](README_EN\.md)
+[English Readme:](\/documents\/README_EN\.md)
 
 * 普通proxy代理服务器为防止盗用，需要用basic auth密码保护，但这就很容易被发现是代理服务器而被封锁。
 * 普通proxy代理服务器没有SSL加密，如果SSL加密的话一般浏览器也不大支持，需要利用pac url让浏览器支持ssl加密的proxy代理。
@@ -14,7 +14,7 @@
 * 大法经书: https://www.falundafa.org
 
 ## 网站设置
-可以直接在代码里编辑pacproxy.js里的[configsInCode](pacproxy\.js)部分，也可以单独保存网站设置文件，参见[示例设置](examples\/example.site.domain)
+可以直接在代码里编辑pacproxy.js里的[configsInCode](pacproxy\.js)部分，也可以单独保存网站设置文件，参见[示例设置](example.site.domain)
 
 ## 运行
 node pacproxy.js [网站配置文件] [监听端口号]
