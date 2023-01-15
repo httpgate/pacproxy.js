@@ -1,0 +1,26 @@
+{
+  "name": "pacproxy-js",
+  "version": "1.0.0",
+  "description": "A https proxy server use pac url to authorize access, it also can be wrapped by a normal website.",
+  "main": "pacproxy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/httpgate/pacproxy.js.git"
+  },
+  "keywords": [
+    "proxy",
+    "https",
+    "nodejs",
+    "vpn",
+    "ssl"
+  ],
+  "author": "xinjingjie.us@gmail.com",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/httpgate/pacproxy.js/issues"
+  },
+  "homepage": "https://github.com/httpgate/pacproxy.js#readme"
+}

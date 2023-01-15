@@ -12,7 +12,7 @@ const configsInCode = {
 	domain : 'your.proxy.domain',
 	// proxy access port, if Port Forwarding, it's External Port
 	proxyport : 443,
-	// you will share your pac link as: https://yourproxy.domain/paclink , please change it to a long random '/xxxxxxxx'
+	// you will share your pac link as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
 	paclink : '/0000000000000000',
 	// how long this IP can access proxy since this it visit pac link（launch browser or connect to wifi)
 	iphours : 4,
@@ -92,7 +92,7 @@ function run() {
 
 	server.listen(pacProxy.configs.port, function() {
 		console.log(
-			'pac proxy server listening on port %d, share your pac url: %s',
+			'pac proxy server listening on port %d,\r\nshare your pac url:\r\n%s',
 			this.address().port, getPacLink()
 		);
 	});
