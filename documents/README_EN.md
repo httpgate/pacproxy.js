@@ -14,7 +14,7 @@
 * 大法经书: https://www.falundafa.org
 
 ## 网站设置
-可以直接在代码里编辑pacproxy.js里的[configsInCode](pacproxy\.js)部分，也可以单独保存网站设置文件，参见[示例设置](examples\/example.site.domain)
+可以直接在代码里编辑pacproxy.js里的[configsInCode](pacproxy\.js)部分，也可以单独保存网站设置文件，参见[示例设置](example.site.domain)
 
 ## 运行
 node pacproxy.js [网站配置文件] [监听端口号]
