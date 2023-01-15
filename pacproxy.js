@@ -34,8 +34,6 @@ const net = require('net');
 const event = require('events');
 const fs = require('fs');
 const path = require('path');
-const { transpileModule } = require('typescript');
-
 
 /**
  * Shared Variables
