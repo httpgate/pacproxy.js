@@ -14,8 +14,8 @@ const configsInCode = {
 	proxyport : 443,
 	// you will share your pac link as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
 	paclink : '/0000000000000000',
-	// how long this IP can access proxy since this it visit pac link（launch browser or connect to wifi)
-	iphours : 4,
+	// how long this IP can access proxy since last visit（relaunch browser or reconnect to wifi to activate IP again)
+	iphours : 2,
 	// content of https://www.proxy.domain, style is: https://blog.ddns.com/homepage.htm. no local site for safety reason
 	website :  '',
 	// ssl cert file, default is ./{domain}/fullchain.pem
@@ -91,6 +91,7 @@ function run() {
 	load(configs);
 
 	if (!pacProxy.server) var server = createServer();
+	else var server = pacProxy.server ;
 	proxy(server);
 
 	server.listen(pacProxy.configs.port, function() {
@@ -117,7 +118,6 @@ function getConfigs(){
 	return configs;
 }
 
-
 function createServer() {
 	if(!pacProxy.configs.https) return http.createServer();
 
@@ -128,7 +128,7 @@ function createServer() {
 	}
 
 	var certDir =  __dirname
-	if(process.env.CERTDIR) var certDir = process.env.CERTDIR;
+	if(process.env.CERTDIR) certDir = process.env.CERTDIR;
 
 	let domain = pacProxy.configs.domain;
 	var options = {
@@ -176,8 +176,10 @@ function isLocalHost($host) {
 function authenticate(req, res) {
 	var visitorIP = req.socket.remoteAddress;
 	lastPacLoad = pacProxy.proxyClients.get(visitorIP);
-
-	if(lastPacLoad && (lastPacLoad + pacProxy.ipMilliSeconds > Date.now())) return true;	
+	if(!lastPacLoad) return false;
+	lastVisitMilliSeconds = Date.now() - lastPacLoad; 
+	pacProxy.proxyClients.set(visitorIP,Date.now());
+	if (lastVisitMilliSeconds < pacProxy.ipMilliSeconds) return true;	
 	return false;
 }
 
