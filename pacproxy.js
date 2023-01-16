@@ -149,7 +149,7 @@ function getPacLink() {
  */
 function filterHeader(reqHeaders){
 	let resHeaders = reqHeaders;
-	if((!reqHeaders) || (!Array.isArray(reqHeaders))) return;
+	if(!reqHeaders) return resHeaders;
 	if ('connection' in resHeaders) delete resHeaders['connection'];
 	if ('keep-alive' in resHeaders) delete resHeaders['keep-alive'];
 	if ('upgrade' in resHeaders) delete resHeaders['upgrade'];
