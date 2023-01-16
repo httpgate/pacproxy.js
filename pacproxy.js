@@ -223,7 +223,7 @@ function requestRemote(parsed, req, res) {
 	});
 	
 	proxyReq.on('error', function (err) {
-		if (gotResponse) req.socket.end();
+		if (gotResponse) return;
 		else if ('ENOTFOUND' == err.code) response(res,400);
 		else response(res,500);
 		endRequest();
@@ -235,9 +235,11 @@ function requestRemote(parsed, req, res) {
 
 	function endRequest() {
 		try{
-			proxyReq.end();
+			req.socket.end()			
 			req.socket.removeListener('close', endRequest);
+			proxyReq.end();
 			res.removeListener('finish', endRequest);
+			res.removeListener('error', endRequest);
 		} catch (e) {
 			log('%s Error %s ', visitorIP, e.message);
 		}		
