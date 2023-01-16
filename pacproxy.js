@@ -4,7 +4,7 @@
 const configsInCode = {
 	// set to false to save storage and avoid problems
 	logging : true,
-	// run as https server, or as http server inside ssl tunnel (like stunnel)
+	// run as https server, or as http server only for testing purpose (put inside stunnel will lost client IP info)
 	https : true,
 	// proxy listening port, if Port Forwarding, it's Internal Port
 	port : 3128,
@@ -96,7 +96,7 @@ function run() {
 
 	server.listen(pacProxy.configs.port, function() {
 		console.log(
-			'pac proxy server listening on port %d,\r\nshare your pac url:\r\n%s',
+			'\r\npac proxy server listening on port %d,\r\nshare your pac url:  \r\n%s\r\n',
 			this.address().port, getPacLink()
 		);
 	});
@@ -140,7 +140,7 @@ function createServer() {
 }
 
 function getPacLink() {
-	linkDomain = 'https://' + pacProxy.configs.domain;
+	linkDomain = pacProxy.configs.https? 'https://' : 'http://' + pacProxy.configs.domain;
 	if(pacProxy.configs.proxyport != 443) linkDomain += ':' + pacProxy.configs.proxyport;
 	return linkDomain + pacProxy.configs.paclink;
 }
@@ -161,7 +161,8 @@ function log(...args) {
 }
 
 function pacContent() {
-	pacjs = 'function FindProxyForURL(url, host) { return "HTTPS ' + pacProxy.configs.domain + ':' + pacProxy.configs.proxyport + '";}';
+	proxyType = pacProxy.configs.https ? 'HTTPS' : 'PROXY' 
+	pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${pacProxy.configs.domain}:${pacProxy.configs.proxyport}";}`;
 	return pacjs;
 }
 
@@ -174,11 +175,11 @@ function isLocalHost($host) {
 }
 
 function authenticate(req, res) {
-	var visitorIP = req.socket.remoteAddress;
-	lastPacLoad = pacProxy.proxyClients.get(visitorIP);
+	var checkIP = req.socket.remoteAddress;
+	lastPacLoad = pacProxy.proxyClients.get(checkIP);
 	if(!lastPacLoad) return false;
 	lastVisitMilliSeconds = Date.now() - lastPacLoad; 
-	pacProxy.proxyClients.set(visitorIP,Date.now());
+	pacProxy.proxyClients.set(checkIP,Date.now());
 	if (lastVisitMilliSeconds < pacProxy.ipMilliSeconds) return true;	
 	return false;
 }
@@ -330,7 +331,7 @@ function handleRequest(req, res) {
  */
 
 function handleConnect(req, socket) {
-	if(!authenticate(req, socket)) return socketResponse(res,  'HTTP/1.1 403 Forbidden\r\n');;
+	if(!authenticate(req, socket)) return socketResponse(socket,  'HTTP/1.1 403 Forbidden\r\n');;
 	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
 
 	visitorIP = req.socket.remoteAddress;
