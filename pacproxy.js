@@ -1,4 +1,4 @@
-#!node
+#!/usr/bin/env node
 
 //sample configs, change it to your settings
 const configsInCode = {
