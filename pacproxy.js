@@ -140,7 +140,7 @@ function createServer() {
 }
 
 function getPacLink() {
-	linkDomain = pacProxy.configs.https? 'https://' : 'http://' + pacProxy.configs.domain;
+	linkDomain = (pacProxy.configs.https? 'https://' : 'http://') + pacProxy.configs.domain;
 	if(pacProxy.configs.proxyport != 443) linkDomain += ':' + pacProxy.configs.proxyport;
 	return linkDomain + pacProxy.configs.paclink;
 }
