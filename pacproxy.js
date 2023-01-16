@@ -166,7 +166,7 @@ function pacContent() {
 }
 
 function isLocalHost($host) {
-	let $domain = trim($host.split(':')[0]);
+	let $domain = ($host.split(':')[0]).trim();
 	if($domain.includes('localhost') || $domain.includes('.local')) return true;
 	if($domain.includes('::')) return true;  //ipv6 native ip
 	if($domain.startsWith('192.') || $domain.startsWith('10.') || $domain.startsWith('172.') || $domain.startsWith('127.')) return true;
