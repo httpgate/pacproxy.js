@@ -16,7 +16,7 @@ const configsInCode = {
 	paclink : '/0000000000000000',
 	// how long this IP can access proxy since this it visit pac link（launch browser or connect to wifi)
 	iphours : 4,
-	// content of https://www.proxy.domain, style is: https://blog.ddns.com/homepage.htm
+	// content of https://www.proxy.domain, style is: https://blog.ddns.com/homepage.htm. no local site for safety reason
 	website :  '',
 	// ssl cert file, default is ./{domain}/fullchain.pem
 	cert : '',
@@ -61,6 +61,8 @@ function load(configs) {
 	pacProxy.configs = configs;
 	pacProxy.ipMilliSeconds = pacProxy.configs.iphours * 3600 * 1000;
 	if(pacProxy.configs.website) pacProxy.websiteParsed = new URL(pacProxy.configs.website);
+	if(pacProxy.websiteParsed.host && isLocalHost(pacProxy.websiteParsed.host)) pacProxy.configs.website = false;
+
 	if(!pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
 	event.EventEmitter.prototype._maxListeners = 500;
 	event.defaultMaxListeners = 500;
@@ -117,7 +119,11 @@ function getConfigs(){
 function createServer() {
 	if(!pacProxy.configs.https) return http.createServer();
 
-	if(pacProxy.configs.cert && pacProxy.configs.key) return https.createServer({key: pacProxy.configs.key, cert: pacProxy.configs.cert});
+	if(pacProxy.configs.cert && pacProxy.configs.key){
+		let cert1 = path.resolve(__dirname, pacProxy.configs.cert);
+		let key1 = path.resolve(__dirname, pacProxy.configs.key);
+		return https.createServer({key: key1, cert: cert1});
+	}
 
 	var certDir =  __dirname
 	if(process.env.CERTDIR) var certDir = process.env.CERTDIR;
@@ -158,9 +164,9 @@ function pacContent() {
 }
 
 function isLocalHost($host) {
-	let $domain = $host.split(':')[0];
+	let $domain = trim($host.split(':')[0]);
 	if($domain.includes('localhost') || $domain.includes('.local')) return true;
-	if($domain.startsWith('::')) $domain = $domain.slice(7);
+	if($domain.includes('::')) return true;  //ipv6 native ip
 	if($domain.startsWith('192.') || $domain.startsWith('10.') || $domain.startsWith('172.') || $domain.startsWith('127.')) return true;
 	return false;
 }
@@ -168,11 +174,8 @@ function isLocalHost($host) {
 function authenticate(req, res) {
 	var visitorIP = req.socket.remoteAddress;
 	lastPacLoad = pacProxy.proxyClients.get(visitorIP);
-	if(lastPacLoad && (lastPacLoad + pacProxy.ipMilliSeconds > Date.now())) 	return true;
 
-	if(res instanceof http.ServerResponse) response(res,500);
-	else  socketResponse(res,  'HTTP/1.1 500 Internal Server Error\r\n');
-	
+	if(lastPacLoad && (lastPacLoad + pacProxy.ipMilliSeconds > Date.now())) return true;	
 	return false;
 }
 
@@ -253,15 +256,12 @@ function handleWebsite(req, res, parsed) {
 			return response(res,200,{'Content-Type': 'text/plain'},pacContent());
 		}
 
+		if(!pacProxy.configs.website) return response(res, 403);
+		log('%s %s %s ', visitorIP, req.headers.host, req.url);
 		if(! parsed) parsed = new URL('http://'+pacProxy.configs.domain + req.url);
 
-		if(!pacProxy.configs.website) return response(res, 403);
-
-		log('%s %s %s ', visitorIP, req.headers.host, req.url);
-
-		if (! 'host' in req.headers || req.headers.host.split(':')[0] != pacProxy.configs.domain)  return response(res, 500);
-		if(parsed.host != 'localhost') req.headers.host = pacProxy.websiteParsed.host;
 		var headers = filterHeader(req.headers);
+ 	    if (! 'host' in headers || headers.host.split(':')[0] != pacProxy.configs.domain)  return response(res, 500);
 
 		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
 		parsed.protocol = pacProxy.websiteParsed.protocol;
@@ -286,8 +286,8 @@ function handleRequest(req, res) {
 	if(req.url.startsWith('/')) return handleWebsite(req, res);
 	var parsed = new URL(req.url);
 	if(!parsed.host || (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
-	if(!authenticate(req, res)) return;
-    if(isLocalHost(parsed.host)) return response(res,403);
+	if(!authenticate(req, res)) return  response(res, 403);;
+    if(isLocalHost(parsed.host)) return response(res, 403);
 
 	visitorIP = req.socket.remoteAddress;
 	
@@ -324,11 +324,10 @@ function handleRequest(req, res) {
  */
 
 function handleConnect(req, socket) {
-	if(!authenticate(req, socket)) return;
+	if(!authenticate(req, socket)) return socketResponse(res,  'HTTP/1.1 403 Forbidden\r\n');;
 	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
 
 	visitorIP = req.socket.remoteAddress;
-
 	log('%s %s %s ', visitorIP, req.method, req.url);
 
 	var gotResponse = false;
