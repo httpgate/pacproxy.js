@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!node
 
 //sample configs, change it to your settings
 const configsInCode = {
@@ -85,6 +85,8 @@ function proxy(server, configs) {
 run();
 
 function run() {
+	if(!process.argv[1].includes(__filename)) return;  //used as a module
+
     var configs = getConfigs();
 	load(configs);
 
