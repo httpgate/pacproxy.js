@@ -1,1 +1,1 @@
-nohup node ./pacproxy.js ./example.site.domain/production.cfg &
+nohup ./pacproxy.js ./example.site.domain/production.cfg &

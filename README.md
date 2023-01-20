@@ -15,16 +15,22 @@
 * 神韵作品: https://shenyunzuopin.com
 * 大法经书: https://www.falundafa.org
 
-## 网站设置
+## 用户电脑手机设置
+
+请参照 [pac代理电脑手机设置](\/documents\/DeviceSetting_ZH\.md)
+
+## 直接运行pacproxy.js，适合各种Cloud平台
+
+### 网站设置
 
 可以直接在代码里编辑pacproxy.js里的[configsInCode](pacproxy\.js)部分，也可以单独保存网站设置文件，参见[示例设置](example.site.domain)
 
-## 运行
+### 运行
 
 node pacproxy.js [网站配置文件] [监听端口号]
 
 如：node pacproxy.js ./example.site.domain/production.cfg 3129
 
-## 用户电脑手机设置
+## VPS,网站服务器部署
 
-请参照 [pac代理电脑手机设置](\/documents\/DeviceSetting_ZH\.md)
+参见 [pacproxy 网站服务器](https://github.com/httpgate/pacproxy-server)

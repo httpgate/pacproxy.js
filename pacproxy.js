@@ -6,10 +6,10 @@ const configsInCode = {
 	logging : true,
 	// run as https server, or as http server only for testing purpose (put inside stunnel will lost client IP info)
 	https : true,
-	// proxy listening port, if Port Forwarding, it's Internal Port
-	port : 3128,
 	// proxy domain
 	domain : 'your.proxy.domain',
+	// proxy listening port, if Port Forwarding, it's Internal Port
+	port : 3128,
 	// proxy access port, if Port Forwarding, it's External Port
 	proxyport : 443,
 	// you will share your pac link as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
@@ -291,9 +291,14 @@ function handleWebsite(req, res, parsed) {
 
 function handleRequest(req, res) {
 	if(req.url.startsWith('/')) return handleWebsite(req, res);
-	var parsed = new URL(req.url);
+	try {
+		var parsed = new URL(req.url);
+	} catch (e) {
+		return  response(res, 403);
+	}
+
 	if(!parsed.host || (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
-	if(!authenticate(req, res)) return  response(res, 403);;
+	if(!authenticate(req, res)) return  response(res, 403);
     if(isLocalHost(parsed.host)) return response(res, 403);
 
 	visitorIP = req.socket.remoteAddress;
