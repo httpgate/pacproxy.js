@@ -1,4 +1,4 @@
-# pacproxy PAC加密代理服务器
+# pacproxy加密代理服务器
 
 [English Readme:](\/documents\/README_EN\.md)
 * 普通proxy代理服务器为防止盗用，需要用采用代理密码验证，请求密码时会被识别为代理服务器而被封锁。
