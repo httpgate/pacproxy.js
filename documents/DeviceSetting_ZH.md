@@ -1,4 +1,4 @@
-# pacproxy翻墙上网PC手机设置
+# pacproxy翻墙上网设置
 
 ## Windows电脑，Android手机用Firefox：
 

@@ -17,7 +17,7 @@
 
 ## 如何使用
 
-请参照 [pac代理电脑手机设置](\/documents\/DeviceSetting_ZH\.md) 并参阅[关于域名](\/documents\/About_Domain_zh.md)
+请参照 [pac代理电脑手机设置](\/documents\/DeviceSetting_ZH\.md), 并参阅[关于域名](\/documents\/About_Domain_ZH.md)
 
 ## 直接运行pacproxy.js，适合各种Cloud平台
 
