@@ -10,7 +10,7 @@
 
 ## 如果海外设备不用Firefox的加密DNS, 则需要装DNS加密软件：
 
-* 目前建议安装Cloudflare的[One DNS](https://1.1.1.1/) 加密DNS主要是为了隐藏服务器IP，域名本身很难封锁
+* 目前建议安装Cloudflare的[One DNS](https://1.1.1.1/), 加密DNS主要是为了隐藏服务器IP，域名本身很难封锁
 
 * 服务器IP如果封锁了也可随时更换，所以IP被封短时上不了网不要紧，通知服务器管理人员更换IP，先保存当前域名和PAC链接
 
@@ -30,7 +30,7 @@
 
 * 推荐使用U盘安装u盘启动的chromeos系统或linux系统，设置方式类似。U盘推荐用SAMSUNG FIT PLUS
 
-* 在虚拟主机里安装Linux或Windows都可以上网
+* 在虚拟主机里安装Linux或Windows都可以安装Firefox上网
 
 
 ## 注意事项
