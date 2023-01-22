@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
-//sample configs, change it to your settings
+//sample configs, also the default configs, change it to your settings
 const configsInCode = {
 	// set to false to save storage and avoid problems
 	logging : true,
 	// run as https server, or as http server only for testing purpose (put inside stunnel will lost client IP info)
 	https : false,
-	// proxy domain
-	domain : 'your.proxy.domain',
+	// proxy domain like your.proxy.domain
+	domain : 'localhost',
 	// proxy listening port, if Port Forwarding, it's Internal Port
-	port : 3128,
+	port : 8080,
 	// proxy access port, if Port Forwarding, it's External Port
-	proxyport : 443,
+	proxyport : 8080,
 	// you will share your pac link as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
 	paclink : '/0000000000000000',
 	// how long this IP can access proxy since last visit（relaunch browser or reconnect to wifi to activate IP again)
@@ -22,8 +22,16 @@ const configsInCode = {
 	cert : '',
 	// ssl key file, default is ./{domain}/privkey.pem
 	key : '',
-    // An inner proxy listening port, enabled if not 0, need to "npm install ws"
-	innerport : 7513
+    // An inner proxy listening port for websocket proxy, enabled if not 0, need to "npm install ws"
+	innerport : 0,
+	// Skip register proxy request event, it can be registered outside
+	skiprequest : false,
+	// http(s) server created outside, if empty proxy will create a http(s) server
+	server : false,
+	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
+	onrequest : (req, res) => {response(res,403);},
+	// websocket handler for not proxy traffic, enable if innerport not 0
+	onconnection : (ws, req) => { ws.close(1011, "authentication failed");},
 };
 /**
  * Dependencies
@@ -57,18 +65,21 @@ exports.handleRequest = handleRequest;
 
 function proxy(configs) {
 	if(!configs) configs = configsInCode;
+	else merge(configs, configsInCode);
+
 	pacProxy.configs = configs;
 	pacProxy.ipMilliSeconds = pacProxy.configs.iphours * 3600 * 1000;
 	if(pacProxy.configs.website) pacProxy.websiteParsed = new URL(pacProxy.configs.website);
 	if(pacProxy.websiteParsed.host && isLocalHost(pacProxy.websiteParsed.host)) pacProxy.configs.website = false;
-
 	if(!pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
+
 	event.EventEmitter.prototype._maxListeners = 500;
 	event.defaultMaxListeners = 500;
 
 	server = configs.server;
 	if(!server) server = createServer();
 	server.on('connect', handleConnect);
+	if(!configs.skiprequest) server.on('request', handleRequest);
 
 	if(!configs.server) server.listen(pacProxy.configs.port, () => {
 		console.log(
@@ -80,6 +91,13 @@ function proxy(configs) {
 	pacProxy.server = server;
 	if(pacProxy.configs.innerport) initInnerServer();	
 	return server;
+}
+
+function merge(vmain, vdefault){
+
+	Object.entries(vdefault).forEach((value, key) => {
+		if(!vmain[value[0]]) vmain[value[0]] = value[1];
+	} ) ;
 }
 
 function initInnerServer() {
@@ -94,9 +112,11 @@ function initInnerServer() {
     var WebSocket = require("ws");
     var ws = new WebSocket.Server({ server: pacProxy.server });
 	ws.on("connection", handleWebsocket);
-
 }
 
+function gErrorHandler(e) {
+	log('General Error %s ',  e.message);
+}
 /**
  * Start Server if configured
  */
@@ -268,12 +288,17 @@ function handleWebsite(req, res, parsed) {
 			return response(res,200,{'Content-Type': 'text/plain'},pacContent());
 		}
 
-		if(!pacProxy.configs.website) return response(res, 403);
+		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
 		log('%s %s %s ', visitorIP, req.headers.host, req.url);
-		if(! parsed) parsed = new URL('http://'+pacProxy.configs.domain + req.url);
+
+		try{
+			if(! parsed) parsed = new URL('http://'+pacProxy.configs.domain + req.url);
+		} catch (e) {
+			return  response(res, 403);
+		}
 
 		var headers = filterHeader(req.headers);
- 	    if (! 'host' in headers || headers.host.split(':')[0] != pacProxy.configs.domain)  return response(res, 500);
+ 	    if ((! 'host' in headers) || (headers.host.split(':')[0] != pacProxy.configs.domain))  return response(res, 500);
 
 		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
 		parsed.protocol = pacProxy.websiteParsed.protocol;
@@ -295,8 +320,8 @@ function handleWebsite(req, res, parsed) {
  */
 
 function handleRequest(req, res) {
-	if(!authenticate(req, res)) return  response(res, 403);
 	if(req.url.startsWith('/')) return handleWebsite(req, res);
+	if(!authenticate(req, res)) return  response(res, 403);
 	_handleRequest(req, res);
 }
 
@@ -307,7 +332,7 @@ function _handleRequest(req, res) {
 		return  response(res, 403);
 	}
 
-	if(!parsed.host || (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
+	if(parsed.host && (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
     if(isLocalHost(parsed.host)) return response(res, 403);
 
 	visitorIP = req.socket.remoteAddress;	
@@ -338,28 +363,25 @@ function _handleRequest(req, res) {
 	}
 };
 
-
 /**
  * handle CONNECT proxy requests.
  */
 
 function handleConnect(req, socket) {
 	if(!authenticate(req, socket)) return socketResponse(socket,  'HTTP/1.1 403 Forbidden\r\n');;
-	//if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
 	_handleConnect(req, socket);
 }
 
 function _handleConnect(req, socket) {
-	visitorIP = req.socket.remoteAddress;
-	log('%s %s %s ', visitorIP, req.method, req.url);
-
-	var gotResponse = false;
-
-	socket.on('error', function onsocketerror(e) {
-		log('%s Error %s ', visitorIP, e.message);
-	});
-
+	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
     try {
+		socket.on('error', gErrorHandler);
+
+		visitorIP = req.socket.remoteAddress;
+		log('%s %s %s ', visitorIP, req.method, req.url);
+
+		var gotResponse = false;
+
 		ontunnelerror = (err) => {
 			if (gotResponse) return socket.end();
 			if ('ENOTFOUND' == err.code) return socketResponse(socket, 'HTTP/1.1 404 Not Found\r\n');
@@ -371,40 +393,42 @@ function _handleConnect(req, socket) {
             port: req.url.split(':')[1] || 443
         };
 
-		var tunnel = net.createConnection(ropts, () => {
-			gotResponse = true;
-			socketResponse(socket,  'HTTP/1.1 200 Connection established\r\n',
-				(error) =>  {
-					if (error) {
-						try{
-							tunnel.end();
-							socket.end();
-						} catch (e) {
-							log('%s Error %s ', visitorIP, e.message);
-						}
-						return;
-					}
-					tunnel.pipe(socket);
-					socket.pipe(tunnel);
-				}
-			);
-			tunnel.setNoDelay(true);
-			tunnel.on('error', ontunnelerror);
-			tunnel.on('close', () => socket.end());
-		});	
 
+		transfer = (error) =>  {
+			try{
+				gotResponse = true;
+				if (error) {
+					tunnel.end();
+					socket.end();
+					return;
+				}
+				tunnel.pipe(socket);
+				socket.pipe(tunnel);
+			} catch (e) {
+				log('%s Error %s ', visitorIP, e.message);
+			}
+		};
+
+		var tunnel = net.createConnection(ropts, 
+			socketResponse(socket,  'HTTP/1.1 200 Connection established\r\n', transfer)
+		);
+
+		tunnel.on('error', ontunnelerror);
+		tunnel.on('close', () => socket.end());
+		tunnel.setNoDelay(true);
     } catch (e) {
 		log('%s Error %s ', visitorIP, e.message);
     }
 }
 
 function handleWebsocket(ws, req) {
-	if(req.url.trim() != pacProxy.configs.paclink) return ws.close(1011, "authentication failed");
-	//if((!req.headers.host) || isLocalHost(req.headers.host))  return ws.close(1011, "authentication failed");
+	if(req.url.trim() != pacProxy.configs.paclink) return pacProxy.configs.onconnection(ws,req);
+	visitorIP = req.socket.remoteAddress;
+	log('%s %s %s ', visitorIP, 'WSS', req.url);
+
 	tolocal = { host: '127.0.0.1', port: pacProxy.configs.innerport};
 	try{
 		var tunnel = net.createConnection(tolocal)
-
 		ws.on('close', () => tunnel.end());
 		ws.on('error', () => tunnel.end());
 		tunnel.on('end', () => ws.close(1000));
