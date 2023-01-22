@@ -6,6 +6,7 @@
 * 普通proxy代理服务器没有SSL加密，如果SSL加密的话一般浏览器也不大支持，需要利用pac url让浏览器支持ssl加密的proxy代理。
 * pacproxy js利用加密的pac url代替basic auth, 且用https加密流量，达到安全隐身的效果。
 * pacproxy js可运行在任何nodejs环境下，适用于各种电脑系统和平板手机。
+* pacproxy js支持websocket, 可利用各种开启websocket的CDN, Application Gateway中转流量，或部署到支持nodejs聊天室的服务容器内。
 
 ## 推荐
 
