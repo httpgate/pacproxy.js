@@ -62,6 +62,7 @@ const pacProxy = this;
 
 exports.proxy = proxy;
 exports.handleRequest = handleRequest;
+exports.getShareLink = getShareLink;
 
 function proxy(configs) {
 	if(!configs) configs = configsInCode;
@@ -84,7 +85,7 @@ function proxy(configs) {
 	if(!configs.server) server.listen(pacProxy.configs.port, () => {
 		console.log(
 			'\r\npac proxy server listening on port %d,\r\nshare your pac url:  \r\n%s\r\n',
-			server.address().port, getPacLink()
+			server.address().port, getShareLink('http')
 		);
 	});
 
@@ -94,7 +95,6 @@ function proxy(configs) {
 }
 
 function merge(vmain, vdefault){
-
 	Object.entries(vdefault).forEach((value, key) => {
 		if(!vmain[value[0]]) vmain[value[0]] = value[1];
 	} ) ;
@@ -106,7 +106,8 @@ function initInnerServer() {
 	pacProxy.innerServer.on('connect', _handleConnect);
 	pacProxy.innerServer.on('request', _handleRequest);
 	pacProxy.innerServer.listen(pacProxy.configs.innerport, '127.0.0.1', () => {
-		console.log('\r\n Inner proxy server listened on: %s\r\n', pacProxy.innerServer.address().port );
+		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss url:  \r\n%s\r\n',
+		pacProxy.innerServer.address().port, getShareLink('ws'));
 	});
 
     var WebSocket = require("ws");
@@ -167,10 +168,12 @@ function createServer() {
 	return https.createServer(options);
 }
 
-function getPacLink() {
-	linkDomain = (pacProxy.configs.https? 'https://' : 'http://') + pacProxy.configs.domain;
-	if(pacProxy.configs.proxyport != 443) linkDomain += ':' + pacProxy.configs.proxyport;
-	return linkDomain + pacProxy.configs.paclink;
+function getShareLink(protocal) {
+	var linkDomain = protocal + (pacProxy.configs.https? 's://' : '://') + pacProxy.configs.domain;
+	var linkHost = ':' + pacProxy.configs.proxyport;
+	if(pacProxy.configs.https && (pacProxy.configs.proxyport == 443)) linkHost = ''; 
+	if(!pacProxy.configs.https && (pacProxy.configs.proxyport == 80)) linkHost = '';
+	return linkDomain + linkHost + pacProxy.configs.paclink;
 }
 
 /**
