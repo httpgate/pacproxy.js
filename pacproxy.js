@@ -141,7 +141,7 @@ function getConfigs(){
 		return configsInCode;
 	}
 
-	let configPath = path.resolve(__dirname, process.argv[2]);
+	let configPath = path.resolve(process.cwd(), process.argv[2]);
 	let configs = require(configPath);
 
 	if(!process.argv[3]) return configs;
@@ -159,7 +159,7 @@ function createServer() {
 		return https.createServer({key: key1, cert: cert1});
 	}
 
-	var certDir =  __dirname
+	var certDir =  process.cwd()
 	if(process.env.CERTDIR) certDir = process.env.CERTDIR;
 
 	let domain = pacProxy.configs.domain;
