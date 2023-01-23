@@ -5,12 +5,14 @@ const configsInCode = {
 	// set to false to save storage and avoid problems
 	logging : true,
 	// run as https server, or as http server only for testing purpose (put inside stunnel will lost client IP info)
+	// set to true if a https tunnel/reverse-proxy wrapped this http service
 	https : false,
-	// proxy domain like your.proxy.domain
+	// proxy domain like 'your.proxy.domain'
 	domain : 'localhost',
-	// proxy listening port, if Port Forwarding, it's Internal Port
-	port : 8080,
+	// proxy listening port, if Port Forwarding, it's Internal Port. Uuse env setting first
+	port : process.env.PORT || 8080,
 	// proxy access port, if Port Forwarding, it's External Port
+	// set to 443 if https or a https tunnel/reverse-proxy wrapped this http service
 	proxyport : 8080,
 	// you will share your pac link as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
 	paclink : '/0000000000000000',
@@ -22,12 +24,12 @@ const configsInCode = {
 	cert : '',
 	// ssl key file, default is ./{domain}/privkey.pem
 	key : '',
-    // An inner proxy listening port for websocket proxy, enabled if not 0, need to "npm install ws"
+    // if not 0 enable websocket proxy, need to "npm install ws", the inner listining port to receive websocket traffic
 	innerport : 0,
-	// Skip register proxy request event, it can be registered outside
-	skiprequest : false,
 	// http(s) server created outside, if empty proxy will create a http(s) server
 	server : false,
+	// Skip register server.on("request",pacproxy.handlerequest), it can be registered outside
+	skiprequest : false,
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
 	onrequest : (req, res) => {response(res,403);},
 	// websocket handler for not proxy traffic, enable if innerport not 0
@@ -61,7 +63,7 @@ const pacProxy = this;
  */
 
 exports.proxy = proxy;
-exports.handleRequest = handleRequest;
+exports.handleRequest = handleRequest;    //use it like: httpserver.on('request', pacproxy.handlerRequest)
 exports.getShareLink = getShareLink;
 
 function proxy(configs) {
@@ -96,7 +98,7 @@ function proxy(configs) {
 
 function merge(vmain, vdefault){
 	Object.entries(vdefault).forEach((value, key) => {
-		if(!vmain[value[0]]) vmain[value[0]] = value[1];
+		if(!(value[0] in vmain)) vmain[value[0]] = value[1];
 	} ) ;
 }
 
