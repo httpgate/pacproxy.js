@@ -2,11 +2,10 @@
 
 [English Readme:](\/documents\/README_EN\.md)
 * 普通proxy代理服务器为防止盗用，需要用采用代理密码验证，请求密码时会被识别为代理服务器而被封锁。
-* 很多app应用支持操作系统代理设置，但一般不支持访问网络时输入代理服务器密码
-* 普通proxy代理服务器没有SSL加密，如果SSL加密的话一般浏览器也不大支持，需要利用pac url让浏览器支持ssl加密的proxy代理。
-* pacproxy js利用加密的pac url代替basic auth, 且用https加密流量，达到安全隐身的效果。
-* pacproxy js可运行在任何nodejs环境下，适用于各种电脑系统和平板手机。
-* pacproxy js支持websocket, 可利用各种开启websocket的CDN, Application Gateway中转流量，或部署到支持nodejs聊天室的服务容器内。
+* pacproxy利用加密的pac url代替basic auth, 且用https加密流量，达到安全隐身的效果。
+* pacproxy利用实现端到端的加密，从浏览器到目标网站之间的通讯都是https加密。
+* pacproxy支持websocket, 可利用各种开启websocket的CDN, Application Gateway中转流量。
+* pacproxy可以部署到支持nodejs聊天室的服务容器内，可以在Nginx,Litespeed Web Server上部署，此时就仅支持websocket代理
 
 ## 推荐
 

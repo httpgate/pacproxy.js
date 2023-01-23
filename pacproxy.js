@@ -154,8 +154,10 @@ function createServer() {
 	if(!pacProxy.configs.https) return http.createServer();
 
 	if(pacProxy.configs.cert && pacProxy.configs.key){
-		let cert1 = path.resolve(__dirname, pacProxy.configs.cert);
-		let key1 = path.resolve(__dirname, pacProxy.configs.key);
+		let certdir1 = path.resolve(__dirname, pacProxy.configs.cert);
+		let keydir1 = path.resolve(__dirname, pacProxy.configs.key);
+		let cert1 = fs.readFileSync(certdir1);
+		let key1 = fs.readFileSync(keydir1);
 		return https.createServer({key: key1, cert: cert1});
 	}
 
