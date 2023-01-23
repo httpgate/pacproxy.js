@@ -92,6 +92,7 @@ function proxy(configs) {
 	});
 
 	pacProxy.server = server;
+	configs.server = server;
 	if(pacProxy.configs.innerport) initInnerServer();	
 	return server;
 }
