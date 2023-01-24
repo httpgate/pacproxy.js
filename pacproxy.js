@@ -20,10 +20,6 @@ const configsInCode = {
 	iphours : 2,
 	// content of https://www.proxy.domain, style is: https://blog.ddns.com/homepage.htm. no local site for safety reason
 	website :  '',
-	// ssl cert file, default is ./{domain}/fullchain.pem
-	cert : '',
-	// ssl key file, default is ./{domain}/privkey.pem
-	key : '',
     // need to "npm install ws", it will create a inner proxy server to receive websocket traffic
 	websocket : false,
 	// http(s) server created outside, if empty proxy will create a http(s) server
@@ -34,6 +30,12 @@ const configsInCode = {
 	onrequest : (req, res) => {response(res,403);},
 	// websocket handler for not proxy traffic, enable if innerport not 0
 	onconnection : (ws, req) => { ws.close(1011, "authentication failed");},
+	// ssl cert dir
+	certdir : '',
+	// ssl cert file, default is {certdir}/{domain}/fullchain.pem
+	cert : '',
+	// ssl key file, default is {certdir}/{domain}/privkey.pem
+	key : '',
 };
 /**
  * Dependencies
@@ -159,8 +161,7 @@ function createServer() {
 		return https.createServer({key: key1, cert: cert1});
 	}
 
-	var certDir =  process.cwd()
-	if(process.env.CERTDIR) certDir = process.env.CERTDIR;
+	var certDir = pacProxy.configs.certdir || process.env.CERTDIR || process.cwd()
 
 	let domain = pacProxy.configs.domain;
 	var options = {
