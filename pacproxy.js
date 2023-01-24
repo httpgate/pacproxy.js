@@ -105,19 +105,17 @@ function merge(vmain, vdefault){
 }
 
 function initInnerServer() {
-	if(pacProxy.configs.innerport==0) return;
 	pacProxy.innerServer = http.createServer();
 	pacProxy.innerServer.on('connect', _handleConnect);
 	pacProxy.innerServer.on('request', _handleRequest);
 	pacProxy.innerServer.listen(0, '127.0.0.1', () => {
 		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss url:  \r\n%s\r\n',
 		pacProxy.innerServer.address().port, getShareLink('ws'));
+		pacProxy.configs.innerport = pacProxy.innerServer.address().port; 
+		var WebSocket = require("ws");
+		var ws = new WebSocket.Server({ server: pacProxy.server });
+		ws.on("connection", handleWebsocket);
 	});
-
-	pacProxy.configs.innerport = pacProxy.innerServer.address().port; 
-    var WebSocket = require("ws");
-    var ws = new WebSocket.Server({ server: pacProxy.server });
-	ws.on("connection", handleWebsocket);
 }
 
 function gErrorHandler(e) {
