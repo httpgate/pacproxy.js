@@ -24,8 +24,8 @@ const configsInCode = {
 	cert : '',
 	// ssl key file, default is ./{domain}/privkey.pem
 	key : '',
-    // if not 0 enable websocket proxy, need to "npm install ws", the inner listining port to receive websocket traffic
-	innerport : 0,
+    // need to "npm install ws", it will create a inner proxy server to receive websocket traffic
+	websocket : false,
 	// http(s) server created outside, if empty proxy will create a http(s) server
 	server : false,
 	// Skip register server.on("request",pacproxy.handlerequest), it can be registered outside
@@ -65,6 +65,7 @@ const pacProxy = this;
 exports.proxy = proxy;
 exports.handleRequest = handleRequest;    //use it like: httpserver.on('request', pacproxy.handlerRequest)
 exports.getShareLink = getShareLink;
+exports.merge = merge;
 
 function proxy(configs) {
 	if(!configs) configs = configsInCode;
@@ -93,7 +94,7 @@ function proxy(configs) {
 
 	pacProxy.server = server;
 	configs.server = server;
-	if(pacProxy.configs.innerport) initInnerServer();	
+	if(pacProxy.configs.websocket) initInnerServer();	
 	return server;
 }
 
@@ -108,11 +109,12 @@ function initInnerServer() {
 	pacProxy.innerServer = http.createServer();
 	pacProxy.innerServer.on('connect', _handleConnect);
 	pacProxy.innerServer.on('request', _handleRequest);
-	pacProxy.innerServer.listen(pacProxy.configs.innerport, '127.0.0.1', () => {
+	pacProxy.innerServer.listen(0, '127.0.0.1', () => {
 		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss url:  \r\n%s\r\n',
 		pacProxy.innerServer.address().port, getShareLink('ws'));
 	});
 
+	pacProxy.configs.innerport = pacProxy.innerServer.address().port; 
     var WebSocket = require("ws");
     var ws = new WebSocket.Server({ server: pacProxy.server });
 	ws.on("connection", handleWebsocket);

@@ -1,6 +1,6 @@
 {
   "name": "pacproxy-js",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "A https proxy server use pac url to authorize access, it also can be wrapped by a normal website.",
   "main": "pacproxy.js",
   "scripts": {
