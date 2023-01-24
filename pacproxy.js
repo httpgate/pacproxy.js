@@ -202,11 +202,15 @@ function pacContent() {
 	return pacjs;
 }
 
-function isLocalHost($host) {
-	let $domain = ($host.split(':')[0]).trim();
-	if($domain.includes('localhost') || $domain.includes('.local')) return true;
-	if($domain.includes('::')) return true;  //ipv6 native ip
-	if($domain.startsWith('192.') || $domain.startsWith('10.') || $domain.startsWith('172.') || $domain.startsWith('127.')) return true;
+function isLocalHost(host) {
+	let domain = (host.split(':')[0]).trim();
+	if(domain.includes('localhost') || domain.includes('.local')) return true;
+	return isLocalIP(domain);
+}
+
+function isLocalIP(address) {
+	if(address.includes('::')) return true;  //ipv6 native ip
+	if(address.startsWith('192.168') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254')) return true;
 	return false;
 }
 
@@ -246,6 +250,7 @@ function requestRemote(parsed, req, res) {
 	if(parsed.protocol == 'https:') agent = https;
 
 	var proxyReq = agent.request(parsed, function(proxyRes) {
+		if(isLocalIP(proxyRes.socket.remoteAddress)) return endRequest();
 
 		var headers = filterHeader(proxyRes.headers);
 
@@ -257,7 +262,7 @@ function requestRemote(parsed, req, res) {
 
 	});
 	
-	proxyReq.on('error', function (err) {
+	proxyReq.on('error',  (err) => {
 		if (gotResponse) return;
 		else if ('ENOTFOUND' == err.code) response(res,400);
 		else response(res,500);
@@ -419,6 +424,14 @@ function _handleConnect(req, socket) {
 		var tunnel = net.createConnection(ropts, 
 			socketResponse(socket,  'HTTP/1.1 200 Connection established\r\n', transfer)
 		);
+
+		tunnel.on('lookup',(err, addresss) => {
+			if(isLocalIP(addresss)){
+				log('%s Error %s ', visitorIP, 'visit localIP');
+				tunnel.end();
+				socket.end();
+			}
+		});
 
 		tunnel.on('error', ontunnelerror);
 		tunnel.on('close', () => socket.end());

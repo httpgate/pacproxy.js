@@ -6,6 +6,7 @@
 * pacproxy利用实现端到端的加密，从浏览器到目标网站之间的通讯都是https加密。
 * pacproxy支持websocket, 可利用各种开启websocket的CDN, Application Gateway中转流量。
 * pacproxy可以部署到支持nodejs聊天室的服务容器内，可以在Nginx,Litespeed Web Server上部署，此时就仅支持websocket代理
+* 阻止通过代理访问内网的常见IP段：192.168.xx, 10.xxx, 127.xxx, 169.254.xx 以及常见内网ipv6地址
 
 ## 推荐
 
