@@ -203,12 +203,14 @@ function pacContent() {
 }
 
 function isLocalHost(host) {
+	if(!host) return true;
 	let domain = (host.split(':')[0]).trim();
 	if(domain.includes('localhost') || domain.includes('.local')) return true;
 	return isLocalIP(domain);
 }
 
 function isLocalIP(address) {
+	if(!address) return true;
 	if(address.includes('::')) return true;  //ipv6 native ip
 	if(address.startsWith('192.168') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254')) return true;
 	return false;
