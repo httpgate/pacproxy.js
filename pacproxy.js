@@ -28,7 +28,7 @@ const configsInCode = {
 	skiprequest : false,
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
 	onrequest : (req, res) => {response(res,403);},
-	// websocket handler for not proxy traffic, enable if innerport not 0
+	// websocket handler for not proxy traffic, enable if websocket enabled
 	onconnection : (ws, req) => { ws.close(1011, "authentication failed");},
 	// ssl cert dir
 	certdir : '',
