@@ -46,7 +46,8 @@ const net = require('net');
 const event = require('events');
 const fs = require('fs');
 const path = require('path');
-const mobileBrowser = { 'firefox' : 'FxiOS', 'chrome' : 'CriOS', 'edge' : 'EdgiOS' } ;
+const iosBrowser = { 'firefox' : 'FxiOS', 'chrome' : 'CriOS', 'edge' : 'EdgiOS' } ;
+const normalBrowser = { 'firefox' : ' Firefox', 'chrome' : ' Chrome', 'edge' : ' Edg', 'opera' : ' OPR' } ;
 
 /**
  * Shared Variables
@@ -198,12 +199,17 @@ function log(...args) {
 }
 
 function pacContent(userAgent, vbrowser) {
-	let pacDirect = `function FindProxyForURL(url, host) { return "DIRECT";}`;
+	log('%s PAC %s ', vbrowser, userAgent);
+	let pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
 	if(vbrowser){
 		let mbrowser = vbrowser.trim().toLowerCase();
-		if(mbrowser in mobileBrowser){
+		if(mbrowser in normalBrowser){
 			if(!userAgent) return pacDirect;
-			else if(!userAgent.includes(mobileBrowser[mbrowser])) return pacDirect;
+			else if(!userAgent.includes(normalBrowser[mbrowser])) return pacDirect;
+			else if(mbrowser=='chrome'){
+				if(userAgent.includes(normalBrowser['edge'])) return pacDirect;
+				if(userAgent.includes(normalBrowser['opera'])) return pacDirect;
+			}
 		} else {
 			return pacDirect;
 		}

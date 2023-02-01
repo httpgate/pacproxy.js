@@ -10,19 +10,16 @@
 
 ## 仅限国外购买的国外品牌的原装手机/平板：
 
-* 苹果手机平板，设置Settings->Wi-Fi ->点击家里的wifi名 -> 滚动到最下边有http代理(http proxy)->选自动(Auto)->输入(URL)网址：https://PACURL ， 如果仅firefox浏览器翻墙，则设为：https://PACURL/firefox ， 目前支持仅firefox或仅chrome浏览器翻墙上网。
+* 苹果手机平板, 由于Safari不支持https加密代理，其他浏览器都是Safari内核，所以暂不支持pacproxy
 
-* Android安卓系统，长按wifi连接，双击家里的wifi名，点屏幕右上角编辑图标，选(Advanced Setting)高级设置->代理(Proxy)->选自动设置(Auto-config)->输入PAC网络地址(PAC Web Address)： https://PACURL->点(Save)保存
+* Android安卓系统，长按wifi连接，双击家里的wifi名，点屏幕右上角编辑图标，选(Advanced Setting)高级设置->代理(Proxy)->选自动设置(Auto-config)->输入PAC网络地址(PAC Web Address)： https://PACURL->点(Save)保存,  如果仅firefox翻墙, 则输入: https://PACURL/firefox
 
 * 海外设备在wireless无线网络上设置pacproxy的话，其他软件就也能上网，设备上尽量不要安装任何国产软件
 
-* 建议安装DNS应用，[Android安装](https://play.google.com/store/apps/details?id=com.securedns), [iOS安装](https://apps.apple.com/us/app/dns-changer-trust-dns/id1498090025) , 尽量选择知名DOH Secure DNS, 也可以根据家庭需求选过滤广告或色情内容的海外DNS
-
-* 可以在家里wifi路由器上单独设置一个wifi热点，用来设置全局代理。仅连到此wifi热点时启用代理
-
 ## 仅限没安装国产软件的干净原装WINDOWS专用系统：
 
-* WINDOWS 10/11, 开始菜单->设置(Settings)->搜索：代理(Proxy)->勾选上(Use Setup Script)使用设置脚本->输入(Script Address)脚本地址：https://PACURL->点(Save)保存
+* WINDOWS 10/11, 开始菜单->设置(Settings)->搜索：代理(Proxy)->勾选上(Use Setup Script)使用设置脚本->输入(Script Address)脚本地址：https://PACURL->点(Save)保存， 如果仅firefox翻墙, 则输入: https://PACURL/firefox
+
 
 ## 其他设备
 
@@ -30,6 +27,7 @@
 
 * 在虚拟主机里安装Linux或Windows都可以安装Firefox上网
 
+* 干净的专用系统，可以在Firefox设置不走代理(No Proxy), wifi上设置PAC代理，这样其它软件和浏览器都走PAC代理
 
 ## 注意事项
 
@@ -37,10 +35,8 @@
 
 * 隔一段时间不访问网站后，代理服务会自动断开，再上网时会连不上。这时只需要关闭浏览器再重新打开，或断开wifi再连上就可以了。
 
-* 被长期监控的敏感人士，最好用一台干净设备蹭咖啡厅，快餐店的wifi，在人多时段上网。避免在家里连接代理。
+* 被长期监控的敏感人士，最好用一台干净设备蹭咖啡厅，快餐店的wifi，在人多时段上网。避免在家里连接代理。可考虑用[wssproxy-agent](https://github.com/httpgate/wssproxy-agent)通过cloudflare等CDN中转翻墙
 
 * 上敏感网站需要用浏览器的匿名模式，尽量访问https:// 的加密网站，避免访问http:// 的非加密网站
 
 * 服务器IP如果封锁了也可随时更换，所以IP被封短时上不了网不要紧，通知服务器管理人员更换IP，先保存当前域名和PAC链接
-
-* 某些时段翻墙上网人多可能速度很慢， 可以选个别的时间翻墙上网看看。
