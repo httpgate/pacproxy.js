@@ -9,11 +9,11 @@ const configsInCode = {
 	https : false,
 	// proxy domain like 'your.proxy.domain'
 	domain : 'localhost',
-	// proxy listening port, if Port Forwarding, it's Internal Port. Uuse env setting first
-	port : process.env.PORT || 8080,
+	// proxy listening port, if Port Forwarding, it's Internal Port. use env setting first
+	port : 3128,
 	// proxy access port, if Port Forwarding, it's External Port
 	// set to 443 if https or a https tunnel/reverse-proxy wrapped this http service
-	proxyport : 8080,
+	proxyport : 3128,
 	// you will share your pac link as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
 	paclink : '/0000000000000000',
 	// how long this IP can access proxy since last visit（relaunch browser or reconnect to wifi to activate IP again)
@@ -35,7 +35,7 @@ const configsInCode = {
 	// ssl cert file, default is {certdir}/{domain}/fullchain.pem
 	cert : '',
 	// ssl key file, default is {certdir}/{domain}/privkey.pem
-	key : '',
+	key : ''
 };
 /**
  * Dependencies
@@ -46,6 +46,7 @@ const net = require('net');
 const event = require('events');
 const fs = require('fs');
 const path = require('path');
+const mobileBrowser = { 'firefox' : 'FxiOS', 'chrome' : 'CriOS', 'edge' : 'EdgiOS' } ;
 
 /**
  * Shared Variables
@@ -173,8 +174,8 @@ function createServer() {
 }
 
 function getShareLink(protocal) {
-	var linkDomain = protocal + (pacProxy.configs.https? 's://' : '://') + pacProxy.configs.domain;
-	var linkHost = ':' + pacProxy.configs.proxyport;
+	let linkDomain = protocal + (pacProxy.configs.https? 's://' : '://') + pacProxy.configs.domain;
+	let linkHost = ':' + pacProxy.configs.proxyport;
 	if(pacProxy.configs.https && (pacProxy.configs.proxyport == 443)) linkHost = ''; 
 	if(!pacProxy.configs.https && (pacProxy.configs.proxyport == 80)) linkHost = '';
 	return linkDomain + linkHost + pacProxy.configs.paclink;
@@ -196,9 +197,19 @@ function log(...args) {
 	if (pacProxy.configs && pacProxy.configs.logging) console.log(...args);
 }
 
-function pacContent() {
-	proxyType = pacProxy.configs.https ? 'HTTPS' : 'PROXY' 
-	pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${pacProxy.configs.domain}:${pacProxy.configs.proxyport}";}`;
+function pacContent(userAgent, vbrowser) {
+	let pacDirect = `function FindProxyForURL(url, host) { return "DIRECT";}`;
+	if(vbrowser){
+		let mbrowser = vbrowser.trim().toLowerCase();
+		if(mbrowser in mobileBrowser){
+			if(!userAgent.includes(mobileBrowser[mbrowser])) return pacDirect;
+		} else {
+			return pacDirect;
+		}
+	}
+
+	let proxyType = pacProxy.configs.https ? 'HTTPS' : 'PROXY' 
+	let pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${pacProxy.configs.domain}:${pacProxy.configs.proxyport}";}`;
 	return pacjs;
 }
 
@@ -265,7 +276,7 @@ function requestRemote(parsed, req, res) {
 	});
 	
 	proxyReq.on('error',  (err) => {
-		if (gotResponse) return;
+		if (gotResponse) {}
 		else if ('ENOTFOUND' == err.code) response(res,400);
 		else response(res,500);
 		endRequest();
@@ -297,9 +308,9 @@ function requestRemote(parsed, req, res) {
 function handleWebsite(req, res, parsed) {
     try {
 		visitorIP = req.socket.remoteAddress;
-		if (req.url == pacProxy.configs.paclink) {
+		if (req.url.startsWith(pacProxy.configs.paclink)) {
 			pacProxy.proxyClients.set(visitorIP,Date.now())
-			return response(res,200,{'Content-Type': 'text/plain'},pacContent());
+			return response(res,200,{'Content-Type': 'text/plain'},pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1)));
 		}
 
 		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
@@ -312,7 +323,7 @@ function handleWebsite(req, res, parsed) {
 		}
 
 		var headers = filterHeader(req.headers);
- 	    if ((! 'host' in headers) || (headers.host.split(':')[0] != pacProxy.configs.domain))  return response(res, 500);
+ 	    if ((! 'host' in headers) || (headers.host.split(':')[0] != pacProxy.configs.domain))  return response(res, 403);
 
 		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
 		parsed.protocol = pacProxy.websiteParsed.protocol;
@@ -348,6 +359,7 @@ function _handleRequest(req, res) {
 
 	if(parsed.host && (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
     if(isLocalHost(parsed.host)) return response(res, 403);
+	req.socket.setTimeout(60*1000+100);
 
 	visitorIP = req.socket.remoteAddress;	
 	log('%s %s %s ', visitorIP, req.method, req.url);
@@ -388,6 +400,7 @@ function handleConnect(req, socket) {
 
 function _handleConnect(req, socket) {
 	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
+	socket.setTimeout(60*1000+100);
     try {
 		socket.on('error', gErrorHandler);
 
