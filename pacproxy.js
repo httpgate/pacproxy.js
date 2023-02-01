@@ -202,7 +202,8 @@ function pacContent(userAgent, vbrowser) {
 	if(vbrowser){
 		let mbrowser = vbrowser.trim().toLowerCase();
 		if(mbrowser in mobileBrowser){
-			if(!userAgent.includes(mobileBrowser[mbrowser])) return pacDirect;
+			if(!userAgent) return pacDirect;
+			else if(!userAgent.includes(mobileBrowser[mbrowser])) return pacDirect;
 		} else {
 			return pacDirect;
 		}

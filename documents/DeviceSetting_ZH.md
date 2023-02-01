@@ -16,7 +16,7 @@
 
 * 海外设备在wireless无线网络上设置pacproxy的话，其他软件就也能上网，设备上尽量不要安装任何国产软件
 
-* 建议安装DNS应用，[Android安装](https://play.google.com/store/apps/details?id=com.securedns), [iOS安装](https://apps.apple.com/us/app/dns-changer-trust-dns/id1498090025) , 尽量选择DOH Secure DNS, 也可以根据家庭需求选过滤广告或色情内容的海外DNS
+* 建议安装DNS应用，[Android安装](https://play.google.com/store/apps/details?id=com.securedns), [iOS安装](https://apps.apple.com/us/app/dns-changer-trust-dns/id1498090025) , 尽量选择知名DOH Secure DNS, 也可以根据家庭需求选过滤广告或色情内容的海外DNS
 
 * 可以在家里wifi路由器上单独设置一个wifi热点，用来设置全局代理。仅连到此wifi热点时启用代理
 
