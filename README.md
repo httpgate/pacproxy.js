@@ -3,7 +3,7 @@
 [English Readme:](\/documents\/README_EN\.md)
 * 普通proxy代理服务器为防止盗用，需要用采用代理密码验证，请求密码时会被识别为代理服务器而被封锁。
 * pacproxy利用加密的pac url代替basic auth, 且用https加密流量，达到安全隐身的效果。
-* pacproxy利用实现端到端的加密，从浏览器到目标网站之间的通讯都是https加密。
+* pacproxy采用端到端的加密，从浏览器到目标网站之间的通讯都是https加密。
 * pacproxy支持websocket, 可利用各种开启websocket的CDN, Application Gateway中转流量。
 * pacproxy可以部署到支持nodejs聊天室的服务容器内，可以在Nginx,Litespeed Web Server上部署，此时就仅支持websocket代理
 * 阻止通过代理访问内网的常见IP段：192.168.xx, 10.xxx, 127.xxx, 169.254.xx 以及常见内网ipv6地址
