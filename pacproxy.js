@@ -46,7 +46,7 @@ const net = require('net');
 const event = require('events');
 const fs = require('fs');
 const path = require('path');
-const iosBrowser = { 'firefox' : 'FxiOS', 'chrome' : 'CriOS', 'edge' : 'EdgiOS' } ;
+const iosBrowser = { 'firefox' : ' FxiOS', 'chrome' : ' CriOS', 'edge' : ' EdgiOS' } ;
 const normalBrowser = { 'firefox' : ' Firefox', 'chrome' : ' Chrome', 'edge' : ' Edg', 'opera' : ' OPR' } ;
 
 /**
