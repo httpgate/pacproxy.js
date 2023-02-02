@@ -8,6 +8,8 @@
 
 * 如果你已经有了域名，但没有whois保护，在网上查询whois时能查到你注册信息，要么让你的域名商加上whois保护，或者也可以把域名的nameservers修改为cloudflare的nameserver, 这样也能获得免费的whois信息保护，但以后修改域名指向就得去cloudflare修改。
 
+* 注册域名时需要注意有一些域名不支持whois加密，要避开这些[不支持保密的域名](https://www.domain.com/help/article/domain-management-tlds-not-supporting-privacy)
+
 * 要分享PAC链接翻墙时，需要确保对域名的控制权，因为域名如果过期被抢注的话，过去拥有的PAC链接的人不能访问外，还有被察觉那些人用了PAC链接的风险。
 
 * 域名暴露了也没有关系，只要启用Firefox的DOH（DNS OVER HTTPS), 或者安装DNS加密软件就不影响上网. 目前建议安装Cloudflare的[One DNS](https://1.1.1.1/) .加密DNS主要是为了隐藏服务器IP。
