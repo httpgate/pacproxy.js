@@ -60,6 +60,7 @@ this.websiteParsed = false;
 this.proxyClients = new Map();
 this.ipMilliSeconds = 0;
 this.innerServer = false;
+this.tlsServer = false;
 const pacProxy = this;
 
 /**
@@ -113,12 +114,22 @@ function initInnerServer() {
 	pacProxy.innerServer.on('connect', _handleConnect);
 	pacProxy.innerServer.on('request', _handleRequest);
 	pacProxy.innerServer.listen(0, '127.0.0.1', () => {
-		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss url:  \r\n%s\r\n',
-		pacProxy.innerServer.address().port, getShareLink('ws'));
 		pacProxy.configs.innerport = pacProxy.innerServer.address().port; 
+		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss url:  \r\n%s\r\n',
+		pacProxy.configs.innerport, getShareLink('ws'));
 		var WebSocket = require("ws");
 		var ws = new WebSocket.Server({ server: pacProxy.server });
 		ws.on("connection", handleWebsocket);
+	});
+
+	if(!pacProxy.configs.https) return;
+	pacProxy.tlsServer = createServer();
+	pacProxy.tlsServer.on('connect', _handleConnect);
+	pacProxy.tlsServer.on('request', _handleRequest);
+	pacProxy.tlsServer.listen(0, '127.0.01', ()=>{
+		pacProxy.configs.tlsport = pacProxy.tlsServer.address().port;
+		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss+tls url:  \r\n%s\r\n',
+		pacProxy.configs.tlsport, getShareLink('ws')+'/tls');
 	});
 }
 
@@ -464,11 +475,15 @@ function _handleConnect(req, socket) {
 }
 
 function handleWebsocket(ws, req) {
-	if(req.url.trim() != pacProxy.configs.paclink) return pacProxy.configs.onconnection(ws,req);
-	visitorIP = req.socket.remoteAddress;
-	log('%s %s %s ', visitorIP, 'WSS', req.url);
+	if(!req.url.startsWith( pacProxy.configs.paclink)) return pacProxy.configs.onconnection(ws,req);
+	let visitorIP = req.socket.remoteAddress;
+	let suburl = req.url.slice(pacProxy.configs.paclink.length);
+	log('%s %s %s ', visitorIP, 'WSS', suburl);
 
-	tolocal = { host: '127.0.0.1', port: pacProxy.configs.innerport};
+	if(!suburl) var tolocal = { host: '127.0.0.1', port: pacProxy.configs.innerport};
+	else if(suburl.toLowerCase() == '/tls')  var tolocal = { host: '127.0.0.1', port: pacProxy.configs.tlsport};
+	else return ws.close(1011, "authentication failed");
+
 	try{
 		var tunnel = net.createConnection(tolocal)
 		ws.on('close', () => tunnel.end());
