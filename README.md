@@ -28,9 +28,9 @@
 * 搭建pacproxy服务器需要[申请一个域名](\/documents\/About_Domain_ZH.md)
 
 
-## 直接部署，适合各种Cloud平台
+## 直接部署
 
-### 网站设置
+### 设置
 
 可以直接在代码里编辑pacproxy.js里的[configsInCode](pacproxy\.js)部分，也可以单独保存网站设置文件，参见[示例设置](example.site.domain)
 
