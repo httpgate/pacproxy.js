@@ -98,8 +98,8 @@ function proxy(configs) {
 	});
 
 	pacProxy.server = server;
-	configs.server = server;
 	if(pacProxy.configs.websocket) initInnerServer();	
+	configs.server = server;
 	return server;
 }
 
@@ -123,6 +123,9 @@ function initInnerServer() {
 	});
 
 	if(!pacProxy.configs.https) return;
+	if(pacProxy.configs.forcert) return;
+	if(pacProxy.configs.server) return;
+	
 	pacProxy.tlsServer = createServer();
 	pacProxy.tlsServer.on('connect', _handleConnect);
 	pacProxy.tlsServer.on('request', _handleRequest);
