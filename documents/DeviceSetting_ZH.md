@@ -8,7 +8,7 @@
 
 * Android要安装[firefox nightly build](https://play.google.com/store/apps/details?id=org.mozilla.fenix )（可[下载apk自己安装](https://www.apkmirror.com/apk/mozilla/firefox-fenix))， 在Firefox地址栏中输入about:config，在出现的搜索框中，键入proxy点搜索按钮。从下面列出的相关选项中，找到network.proxy.type更改为2，找到network.proxy.autoconfig_url更改为 https://PACURL .  再搜索栏键入trr, 从列出选项中找到network.trr.mode改为2，network.trr.odoh.enabled改为true，network.trr.uri更改为https://mozilla.cloudflare-dns.com/dns-query 。
 
-* IPAD/IPhone虽然也能装firefox, 但据说是Safari内核，不能单独设置代理。苹果电脑则可以用firefox没有问题
+* IPAD/IPhone上的firefox是Safari内核，不能单独设置代理。苹果电脑则可以用firefox没有问题
 
 
 ## 注意事项
