@@ -1,4 +1,6 @@
 # pacproxy翻墙上网设置
+需要先运行[pacproxy服务](https://github.com/httpgate/pacproxy.js) ， 运行后屏幕会显示 PACURL
+
 
 ## Windows，桌面电脑，Android手机用Firefox：
 
@@ -8,6 +10,7 @@
 
 * IPAD/IPhone虽然也能装firefox, 但据说是Safari内核，不能单独设置代理。苹果电脑则可以用firefox没有问题
 
+
 ## 仅限国外购买的国外品牌的原装手机/平板：
 
 * 苹果手机平板, 由于Safari不支持https加密代理，其他浏览器都是Safari内核，所以暂不支持pacproxy
@@ -15,6 +18,7 @@
 * Android安卓系统，长按wifi连接，双击家里的wifi名，点屏幕右上角编辑图标，选(Advanced Setting)高级设置->代理(Proxy)->选自动设置(Auto-config)->输入PAC网络地址(PAC Web Address)： https://PACURL->点(Save)保存,  如果仅firefox翻墙, 则输入: https://PACURL/firefox
 
 * 海外设备在wireless无线网络上设置pacproxy的话，其他软件就也能上网，设备上尽量不要安装任何国产软件
+
 
 ## 仅限没安装国产软件的干净原装WINDOWS专用系统：
 
@@ -28,6 +32,7 @@
 * 在虚拟主机里安装Linux或Windows都可以安装Firefox上网
 
 * 干净的专用系统，可以在Firefox设置不走代理(No Proxy), wifi上设置PAC代理，这样其它软件和浏览器都走PAC代理
+
 
 ## 注意事项
 
