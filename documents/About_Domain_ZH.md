@@ -3,8 +3,7 @@
 
 * 域名在网络加密中是至关重要，有域名才能获取受浏览器信任的数字证书，才能保证用户能安全的加密的上网。
 
-* 如果你是新手，建议申请域名时选择 [Cloudflare](https://www.cloudflare.com), 虽然第一年不打折，但以后也绝对不涨价，关键是他会免费帮你隐藏whois注
-册信息，而这在其他公司是收费的。
+* 如果你是新手，建议申请域名时选择 [Cloudflare](https://www.cloudflare.com), 虽然第一年不打折，但以后也绝对不涨价，关键是他会免费帮你隐藏whois注册信息，而这在其他公司是收费的。
 
 * 如果你已经有了域名，但没有whois保护，在网上查询whois时能查到你注册信息，要么让你的域名商加上whois保护，或者也可以把域名的nameservers修改为cloudflare的nameserver, 这样也能获得免费的whois信息保护，但以后修改域名指向就得去cloudflare修改。
 
