@@ -4,28 +4,28 @@
 const configsInCode = {
 	// set to false to save storage and avoid problems
 	logging : true,
-	// run as https server, or as http server only for testing purpose (put inside stunnel will lost client IP info)
+	// run as https server, or as http server only for testing purpose (run inside stunnel will lost client IP info)
 	// set to true if a https tunnel/reverse-proxy wrapped this http service
 	https : false,
 	// proxy domain like 'your.proxy.domain'
 	domain : 'localhost',
-	// proxy listening port, if Port Forwarding, it's Internal Port. use env setting first
+	// proxy listening port, if Port Forwarding, it's Internal Port.
 	port : 3128,
 	// proxy access port, if Port Forwarding, it's External Port
 	// set to 443 if https or a https tunnel/reverse-proxy wrapped this http service
 	proxyport : 3128,
 	// you will share your pac link as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
 	paclink : '/0000000000000000',
-	// how long this IP can access proxy since last visit（relaunch browser or reconnect to wifi to activate IP again)
+	// how long this IP can access proxy since last visit（relaunch browser to reauthorize access)
 	iphours : 2,
+	// a special paclink with username/password, format is:['paclink', 'username', 'password'], browser will prompt to input proxy username/password
+	pacpass : [],  // ['/1111111111111111', 'proxyuser', 'proxypass'],
 	// content of https://www.proxy.domain, style is: https://blog.ddns.com/homepage.htm. no local site for safety reason
 	website :  '',
-    // need to "npm install ws", it will create a inner proxy server to receive websocket traffic
+    // need to "npm install ws", it will create a inner proxy server to handle websocket traffic
 	websocket : false,
 	// http(s) server created outside, if empty proxy will create a http(s) server
 	server : false,
-	// Skip register server.on("request",pacproxy.handlerequest), it can be registered outside
-	skiprequest : false,
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
 	onrequest : (req, res) => {response(res,403);},
 	// websocket handler for not proxy traffic, enable if websocket enabled
@@ -35,8 +35,11 @@ const configsInCode = {
 	// ssl cert file, default is {certdir}/{domain}/fullchain.pem
 	cert : '',
 	// ssl key file, default is {certdir}/{domain}/privkey.pem
-	key : ''
+	key : '',
+	// Skip register server.on("request",pacproxy.handlerequest), it can be registered outside
+	skiprequest : false
 };
+
 /**
  * Dependencies
  */
@@ -46,8 +49,13 @@ const net = require('net');
 const event = require('events');
 const fs = require('fs');
 const path = require('path');
+
+/**
+ * Constants
+ */
 const iosBrowser = { 'firefox' : ' FxiOS', 'chrome' : ' CriOS', 'edge' : ' EdgiOS' } ;
 const normalBrowser = { 'firefox' : ' Firefox', 'chrome' : ' Chrome', 'edge' : ' Edg', 'opera' : ' OPR' } ;
+const pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
 
 /**
  * Shared Variables
@@ -58,6 +66,7 @@ this.httpAgents = new Map();
 this.websiteAgent =  new http.Agent({ keepAlive: true});
 this.websiteParsed = false;
 this.proxyClients = new Map();
+this.proxyUsers = new Map();
 this.ipMilliSeconds = 0;
 this.innerServer = false;
 this.tlsServer = false;
@@ -69,7 +78,6 @@ const pacProxy = this;
 
 exports.proxy = proxy;
 exports.handleRequest = handleRequest;    //use it like: httpserver.on('request', pacproxy.handlerRequest)
-exports.getShareLink = getShareLink;
 exports.merge = merge;
 
 function proxy(configs) {
@@ -92,10 +100,18 @@ function proxy(configs) {
 
 	if(!configs.server) server.listen(pacProxy.configs.port, () => {
 		console.log(
-			'\r\npac proxy server listening on port %d,\r\nshare your pac url:  \r\n%s\r\n',
+			'\r\npac proxy server listening on port %d,\r\nshare your pac url:  \r\n%s',
 			server.address().port, getShareLink('http')
 		);
+
+		if(pacProxy.configs.pacpass.length!==3) return;
+
+		console.log(
+			'\r\nshare your pac url with username/password ::  \r\n%s     %s / %s\r\n',
+			getShareLink('http', pacProxy.configs.pacpass[0]), pacProxy.configs.pacpass[1], pacProxy.configs.pacpass[2]
+		);
 	});
+	server.on("error", err=>console.log(err));
 
 	pacProxy.server = server;
 	if(pacProxy.configs.websocket) initInnerServer();	
@@ -188,12 +204,13 @@ function createServer() {
 	return https.createServer(options);
 }
 
-function getShareLink(protocal) {
+function getShareLink(protocal, vlink) {
 	let linkDomain = protocal + (pacProxy.configs.https? 's://' : '://') + pacProxy.configs.domain;
 	let linkHost = ':' + pacProxy.configs.proxyport;
 	if(pacProxy.configs.https && (pacProxy.configs.proxyport == 443)) linkHost = ''; 
 	if(!pacProxy.configs.https && (pacProxy.configs.proxyport == 80)) linkHost = '';
-	return linkDomain + linkHost + pacProxy.configs.paclink;
+	if(!vlink) vlink = pacProxy.configs.paclink;
+	return linkDomain + linkHost + vlink;
 }
 
 /**
@@ -214,7 +231,6 @@ function log(...args) {
 
 function pacContent(userAgent, vbrowser) {
 	log('%s PAC %s ', vbrowser, userAgent);
-	let pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
 	if(vbrowser){
 		let mbrowser = vbrowser.trim().toLowerCase();
 		if(mbrowser in normalBrowser){
@@ -249,12 +265,35 @@ function isLocalIP(address) {
 }
 
 function authenticate(req, res) {
+	if(basicAuthentication(req)) return true;
 	var checkIP = req.socket.remoteAddress;
-	lastPacLoad = pacProxy.proxyClients.get(checkIP);
+	let lastPacPassLoad = pacProxy.proxyUsers.get(checkIP);
+	if(lastPacPassLoad && (Date.now()<(lastPacPassLoad+90000))) return 407;
+
+	let lastPacLoad = pacProxy.proxyClients.get(checkIP);
 	if(!lastPacLoad) return false;
 	lastVisitMilliSeconds = Date.now() - lastPacLoad; 
+	if (lastVisitMilliSeconds >= pacProxy.ipMilliSeconds) return false;	
 	pacProxy.proxyClients.set(checkIP,Date.now());
-	if (lastVisitMilliSeconds < pacProxy.ipMilliSeconds) return true;	
+	return true;
+}
+
+function basicAuthentication(request) {
+	if(pacProxy.configs.pacpass.length!==3) return false;
+	const Authorization = request.headers['proxy-authorization'];
+	if(!Authorization) return false;
+	const [scheme, encoded] = Authorization.split(' ');
+	if (!encoded || scheme !== 'Basic') return false;
+
+	const buffer = Uint8Array.from(Buffer.from(encoded, 'base64').toString('binary'), (character) =>
+	  character.charCodeAt(0)
+	);
+	const decoded = new TextDecoder().decode(buffer).normalize();
+	const index = decoded.indexOf(':');
+	if (index === -1 || /[\0-\x1F\x7F]/.test(decoded)) return false;
+	let vuser = decoded.substring(0, index).trim();
+	let vpass = decoded.substring(index + 1);
+	if((vuser==pacProxy.configs.pacpass[1]) && (vpass==pacProxy.configs.pacpass[2])) return true;
 	return false;
 }
 
@@ -267,8 +306,8 @@ function response(res, httpCode, headers, content) {
 }
 
 function socketResponse(socket, content, cb) {
+	if(socket.destroyed) return;
 	if(!cb) cb = () => socket.end();
-
     try {
         socket.write(content+ '\r\n', 'UTF-8', cb);
     } catch (error) {
@@ -329,9 +368,24 @@ function requestRemote(parsed, req, res) {
 function handleWebsite(req, res, parsed) {
     try {
 		visitorIP = req.socket.remoteAddress;
-		if (req.url.startsWith(pacProxy.configs.paclink)) {
+		if (pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 			pacProxy.proxyClients.set(visitorIP,Date.now())
-			return response(res,200,{'Content-Type': 'text/plain'},pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1)));
+			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
+			return response(res,200,{'Content-Type': 'text/plain'},vpac);
+		}
+
+		if ((pacProxy.configs.pacpass.length==3) && req.url.startsWith(pacProxy.configs.pacpass[0])) {
+			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.pacpass[0].length+1));
+			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
+			if(!basicAuthentication(req)) pacProxy.proxyUsers.set(visitorIP,Date.now());
+			return response(res,200,{'Content-Type': 'text/plain'},vpac);
+		}
+
+		if(visitorIP.endsWith('127.0.0.1') && req.headers.host.toLowerCase().startsWith('localhost') && req.url.toLowerCase().startsWith('/pac')) {
+			let vpac = pacContent(req.headers['user-agent'], req.url.slice(5));
+			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
+			let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
+			return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
 		}
 
 		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
@@ -367,7 +421,9 @@ function handleWebsite(req, res, parsed) {
 
 function handleRequest(req, res) {
 	if(req.url.startsWith('/')) return handleWebsite(req, res);
-	if(!authenticate(req, res)) return  response(res, 403);
+	let auth = authenticate(req, res);
+	if(!auth) return  response(res, 403);
+	if(auth==407) return response(res,407,{'Proxy-Authenticate': 'Basic realm="proxy"'});
 	_handleRequest(req, res);
 }
 
@@ -415,7 +471,12 @@ function _handleRequest(req, res) {
  */
 
 function handleConnect(req, socket) {
-	if(!authenticate(req, socket)) return socketResponse(socket,  'HTTP/1.1 403 Forbidden\r\n');;
+	socket.on('error', gErrorHandler);
+	socket.pause();
+	let auth = authenticate(req, socket);
+	socket.resume();
+	if(!auth)  return socketResponse(socket,  'HTTP/1.1 403 Forbidden\r\n');
+	if(auth == 407 ) return socketResponse(socket, 'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="proxy"\r\n');
 	_handleConnect(req, socket);
 }
 
@@ -423,8 +484,6 @@ function _handleConnect(req, socket) {
 	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
 	socket.setTimeout(60*1000+100);
     try {
-		socket.on('error', gErrorHandler);
-
 		visitorIP = req.socket.remoteAddress;
 		log('%s %s %s ', visitorIP, req.method, req.url);
 

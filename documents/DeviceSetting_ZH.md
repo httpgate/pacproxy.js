@@ -10,6 +10,9 @@
 
 * IPAD/IPhone上的firefox是Safari内核，不能单独设置代理。苹果电脑则可以用firefox没有问题
 
+* 如果提示输入代理用户名/密码，需要2分钟内输入正确用户名密码，否则需要重新打开浏览器
+
+* 为避免连不上代理时浏览敏感网站流量走本地网络，桌面和移动版firefox都需要在地址栏中输入about:config，在出现的搜索框中，键入proxy点搜索，设置network.proxy.allow_bypass 为 false
 
 ## 注意事项
 
