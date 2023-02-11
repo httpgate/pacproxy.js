@@ -268,7 +268,7 @@ function authenticate(req, res) {
 	if(basicAuthentication(req)) return true;
 	var checkIP = req.socket.remoteAddress;
 	let lastPacPassLoad = pacProxy.proxyUsers.get(checkIP);
-	if(lastPacPassLoad && (Date.now()<(lastPacPassLoad+90000))) return 407;
+	if(lastPacPassLoad && (Date.now()<(lastPacPassLoad+120000))) return 407;
 
 	let lastPacLoad = pacProxy.proxyClients.get(checkIP);
 	if(!lastPacLoad) return false;
