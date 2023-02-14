@@ -268,9 +268,11 @@ function isLocalIP(address) {
 function authenticate(req, res) {
 	if(basicAuthentication(req)) return true;
 	var checkIP = req.socket.remoteAddress;
-	let [lastPacPassLoad, userAgent] = pacProxy.proxyUsers.get(checkIP);
-	if(lastPacPassLoad && (req.headers['user-agent']==userAgent) && (Date.now()<(lastPacPassLoad+120000))) return 407;
-
+	if(pacProxy.proxyUsers.has(checkIP)){
+		let [lastPacPassLoad, userAgent] = pacProxy.proxyUsers.get(checkIP);
+		if((req.headers['user-agent']==userAgent) && (Date.now()<(lastPacPassLoad+120000))) return 407;
+	}
+	
 	let lastPacLoad = pacProxy.proxyClients.get(checkIP);
 	if(!lastPacLoad) return false;
 	lastVisitMilliSeconds = Date.now() - lastPacLoad; 
