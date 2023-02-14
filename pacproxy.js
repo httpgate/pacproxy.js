@@ -107,7 +107,7 @@ function proxy(configs) {
 		if(pacProxy.configs.pacpass.length!==3) return;
 
 		console.log(
-			'\r\nshare your pac url with username/password ::  \r\n%s     %s / %s\r\n',
+			'\r\nshare your pac url with username/password: \r\n%s     %s / %s\r\n',
 			getShareLink('http', pacProxy.configs.pacpass[0]), pacProxy.configs.pacpass[1], pacProxy.configs.pacpass[2]
 		);
 	});
@@ -126,6 +126,9 @@ function merge(vmain, vdefault){
 }
 
 function initInnerServer() {
+	if(pacProxy.configs.forcert) return;
+	if(pacProxy.configs.server) return;
+
 	pacProxy.innerServer = http.createServer();
 	pacProxy.innerServer.on('connect', _handleConnect);
 	pacProxy.innerServer.on('request', _handleRequest);
@@ -139,8 +142,6 @@ function initInnerServer() {
 	});
 
 	if(!pacProxy.configs.https) return;
-	if(pacProxy.configs.forcert) return;
-	if(pacProxy.configs.server) return;
 	
 	pacProxy.tlsServer = createServer();
 	pacProxy.tlsServer.on('connect', _handleConnect);
@@ -267,8 +268,8 @@ function isLocalIP(address) {
 function authenticate(req, res) {
 	if(basicAuthentication(req)) return true;
 	var checkIP = req.socket.remoteAddress;
-	let lastPacPassLoad = pacProxy.proxyUsers.get(checkIP);
-	if(lastPacPassLoad && (Date.now()<(lastPacPassLoad+120000))) return 407;
+	let [lastPacPassLoad, userAgent] = pacProxy.proxyUsers.get(checkIP);
+	if(lastPacPassLoad && (req.headers['user-agent']==userAgent) && (Date.now()<(lastPacPassLoad+120000))) return 407;
 
 	let lastPacLoad = pacProxy.proxyClients.get(checkIP);
 	if(!lastPacLoad) return false;
@@ -377,7 +378,7 @@ function handleWebsite(req, res, parsed) {
 		if ((pacProxy.configs.pacpass.length==3) && req.url.startsWith(pacProxy.configs.pacpass[0])) {
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.pacpass[0].length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
-			if(!basicAuthentication(req)) pacProxy.proxyUsers.set(visitorIP,Date.now());
+			if(!basicAuthentication(req)) pacProxy.proxyUsers.set(visitorIP,[Date.now(), req.headers['user-agent']]);
 			return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		}
 
