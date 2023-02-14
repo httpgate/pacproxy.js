@@ -272,7 +272,7 @@ function authenticate(req, res) {
 		let [lastPacPassLoad, userAgent] = pacProxy.proxyUsers.get(checkIP);
 		if((req.headers['user-agent']==userAgent) && (Date.now()<(lastPacPassLoad+120000))) return 407;
 	}
-	
+
 	let lastPacLoad = pacProxy.proxyClients.get(checkIP);
 	if(!lastPacLoad) return false;
 	lastVisitMilliSeconds = Date.now() - lastPacLoad; 
@@ -371,6 +371,8 @@ function requestRemote(parsed, req, res) {
 function handleWebsite(req, res, parsed) {
     try {
 		visitorIP = req.socket.remoteAddress;
+		log('%s %s %s ', visitorIP, req.headers.host, req.url);
+
 		if (pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 			pacProxy.proxyClients.set(visitorIP,Date.now())
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
@@ -384,15 +386,7 @@ function handleWebsite(req, res, parsed) {
 			return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		}
 
-		if(visitorIP.endsWith('127.0.0.1') && req.headers.host.toLowerCase().startsWith('localhost') && req.url.toLowerCase().startsWith('/pac')) {
-			let vpac = pacContent(req.headers['user-agent'], req.url.slice(5));
-			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
-			let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
-			return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
-		}
-
 		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
-		log('%s %s %s ', visitorIP, req.headers.host, req.url);
 
 		try{
 			if(! parsed) parsed = new URL('http://'+pacProxy.configs.domain + req.url);
@@ -431,6 +425,15 @@ function handleRequest(req, res) {
 }
 
 function _handleRequest(req, res) {
+	visitorIP = req.socket.remoteAddress;	
+	log('%s %s %s ', visitorIP, req.method, req.url);
+	if(visitorIP.endsWith('127.0.0.1') && req.headers.host.toLowerCase().startsWith('localhost') && req.url.toLowerCase().startsWith('/pac')) {
+		let vpac = pacContent(req.headers['user-agent'], req.url.slice(5));
+		if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
+		let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
+		return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
+	}
+
 	try {
 		var parsed = new URL(req.url);
 	} catch (e) {
@@ -438,11 +441,8 @@ function _handleRequest(req, res) {
 	}
 
 	if(parsed.host && (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
-    if(isLocalHost(parsed.host)) return response(res, 403);
+	if(isLocalHost(parsed.host)) return response(res, 403);
 	req.socket.setTimeout(60*1000+100);
-
-	visitorIP = req.socket.remoteAddress;	
-	log('%s %s %s ', visitorIP, req.method, req.url);
 
 	var headers = filterHeader(req.headers);
 
