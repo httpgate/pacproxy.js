@@ -270,15 +270,19 @@ function authenticate(req, res) {
 	var checkIP = req.socket.remoteAddress;
 	if(pacProxy.proxyUsers.has(checkIP)){
 		let [lastPacPassLoad, userAgent] = pacProxy.proxyUsers.get(checkIP);
-		if((req.headers['user-agent']==userAgent) && (Date.now()<(lastPacPassLoad+120000))) return 407;
+		if(Date.now()>(lastPacPassLoad+120000)) pacProxy.proxyUsers.delete(checkIP);
+		else if(req.headers['user-agent']==userAgent) return 407
 	}
 
+	if(!pacProxy.proxyClients.has(checkIP)) return false;
 	let lastPacLoad = pacProxy.proxyClients.get(checkIP);
-	if(!lastPacLoad) return false;
-	lastVisitMilliSeconds = Date.now() - lastPacLoad; 
-	if (lastVisitMilliSeconds >= pacProxy.ipMilliSeconds) return false;	
-	pacProxy.proxyClients.set(checkIP,Date.now());
-	return true;
+	if (pacProxy.ipMilliSeconds + lastPacLoad >= Date.now()){	
+		pacProxy.proxyClients.set(checkIP,Date.now());
+		return true;
+	} else {
+		pacProxy.proxyClients.delete(checkIP);
+		return false;
+	}
 }
 
 function basicAuthentication(request) {
