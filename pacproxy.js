@@ -287,7 +287,7 @@ function authenticate(req, res) {
 
 function basicAuthentication(request) {
 	if(pacProxy.configs.pacpass.length!==3) return false;
-	const Authorization = request.headers['proxy-authorization'];
+	let Authorization = request.headers['proxy-authorization'];
 	if(!Authorization) return false;
 	const [scheme, encoded] = Authorization.split(' ');
 	if (!encoded || scheme !== 'Basic') return false;
@@ -431,7 +431,7 @@ function handleRequest(req, res) {
 function _handleRequest(req, res) {
 	visitorIP = req.socket.remoteAddress;	
 	log('%s %s %s ', visitorIP, req.method, req.url);
-	if(visitorIP.endsWith('127.0.0.1') && req.headers.host.toLowerCase().startsWith('localhost') && req.url.toLowerCase().startsWith('/pac')) {
+	if((visitorIP=='127.0.0.1') && req.headers.host.startsWith('localhost') && req.url.startsWith('/pac')) {
 		let vpac = pacContent(req.headers['user-agent'], req.url.slice(5));
 		if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
@@ -506,7 +506,6 @@ function _handleConnect(req, socket) {
             host: req.url.split(':')[0],
             port: req.url.split(':')[1] || 443
         };
-
 
 		transfer = (error) =>  {
 			try{
