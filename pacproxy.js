@@ -269,14 +269,13 @@ function authenticate(req, res) {
 	if(basicAuthentication(req)) return true;
 	var checkIP = req.socket.remoteAddress;
 	if(pacProxy.proxyUsers.has(checkIP)){
-		let [lastPacPassLoad, userAgent] = pacProxy.proxyUsers.get(checkIP);
-		if(Date.now()>(lastPacPassLoad+120000)) pacProxy.proxyUsers.delete(checkIP);
+		let [pacPassTime, userAgent] = pacProxy.proxyUsers.get(checkIP);
+		if(Date.now()>pacPassTime) pacProxy.proxyUsers.delete(checkIP);
 		else if(req.headers['user-agent']==userAgent) return 407
 	}
 
 	if(!pacProxy.proxyClients.has(checkIP)) return false;
-	let lastPacLoad = pacProxy.proxyClients.get(checkIP);
-	if (pacProxy.ipMilliSeconds + lastPacLoad >= Date.now()){	
+	if (pacProxy.proxyClients.get(checkIP) >= Date.now()){	
 		pacProxy.proxyClients.set(checkIP,Date.now());
 		return true;
 	} else {
@@ -378,7 +377,7 @@ function handleWebsite(req, res, parsed) {
 		log('%s %s %s ', visitorIP, req.headers.host, req.url);
 
 		if (pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
-			pacProxy.proxyClients.set(visitorIP,Date.now())
+			pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
 			return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		}
@@ -386,7 +385,7 @@ function handleWebsite(req, res, parsed) {
 		if ((pacProxy.configs.pacpass.length==3) && req.url.startsWith(pacProxy.configs.pacpass[0])) {
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.pacpass[0].length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
-			if(!basicAuthentication(req)) pacProxy.proxyUsers.set(visitorIP,[Date.now(), req.headers['user-agent']]);
+			if(!basicAuthentication(req)) pacProxy.proxyUsers.set(visitorIP,[Date.now()+120000, req.headers['user-agent']]);
 			return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		}
 
