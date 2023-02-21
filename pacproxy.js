@@ -276,7 +276,7 @@ function authenticate(req, res) {
 
 	if(!pacProxy.proxyClients.has(checkIP)) return false;
 	if (pacProxy.proxyClients.get(checkIP) >= Date.now()){	
-		pacProxy.proxyClients.set(checkIP,Date.now());
+		pacProxy.proxyClients.set(checkIP, Date.now() + pacProxy.ipMilliSeconds );
 		return true;
 	} else {
 		pacProxy.proxyClients.delete(checkIP);
