@@ -63,7 +63,8 @@ const pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
 this.configs = false;
 this.server = false;
 this.httpAgents = new Map();
-this.websiteAgent =  new http.Agent({ keepAlive: true});
+this.httpsAgents = new Map();
+this.websiteAgent =  newAgent();
 this.websiteParsed = false;
 this.proxyClients = new Map();
 this.proxyUsers = new Map();
@@ -88,6 +89,8 @@ function proxy(configs) {
 	pacProxy.ipMilliSeconds = pacProxy.configs.iphours * 3600 * 1000;
 	if(pacProxy.configs.website) pacProxy.websiteParsed = new URL(pacProxy.configs.website);
 	if(pacProxy.websiteParsed.host && isLocalHost(pacProxy.websiteParsed.host)) pacProxy.configs.website = false;
+	else if(pacProxy.websiteParsed.protocol && (pacProxy.websiteParsed.protocol=='https')) pacProxy.configs.website = newAgent(true);
+	
 	if(!pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
 
 	event.EventEmitter.prototype._maxListeners = 500;
@@ -117,6 +120,11 @@ function proxy(configs) {
 	if(pacProxy.configs.websocket) initInnerServer();	
 	configs.server = server;
 	return server;
+}
+
+function newAgent(ssl = false){
+	if(ssl) return new https.Agent({keepAlive: true, timeout: 300000, maxCachedSessions: 200 });
+	else return new http.Agent({ keepAlive: true, timeout: 300000});
 }
 
 function merge(vmain, vdefault){
@@ -246,8 +254,9 @@ function pacContent(userAgent, vbrowser) {
 		}
 	}
 
-	let proxyType = pacProxy.configs.https ? 'HTTPS' : 'PROXY' 
-	let pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${pacProxy.configs.domain}:${pacProxy.configs.proxyport}";}`;
+	let proxyType = pacProxy.configs.https ? 'HTTPS' : 'PROXY' ;
+	let vdomain = pacProxy.configs.domain=='localhost' ? '127.0.0.1' : pacProxy.configs.domain ;
+	let pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${vdomain}:${pacProxy.configs.proxyport}";}`;
 	return pacjs;
 }
 
@@ -325,13 +334,13 @@ function requestRemote(parsed, req, res) {
 	var gotResponse = false;
 
 	log('%s Fetch %s ', visitorIP, parsed);
-	var agent = http;
+	let agent = http;
 	if(parsed.protocol == 'https:') agent = https;
 
 	var proxyReq = agent.request(parsed, function(proxyRes) {
 		if(isLocalIP(proxyRes.socket.remoteAddress)) return endRequest();
 
-		var headers = filterHeader(proxyRes.headers);
+		let headers = filterHeader(proxyRes.headers);
 
 		gotResponse = true;
 
@@ -445,7 +454,6 @@ function _handleRequest(req, res) {
 
 	if(parsed.host && (parsed.host.split(':')[0] == pacProxy.configs.domain)) return handleWebsite(req, res, parsed);
 	if(isLocalHost(parsed.host)) return response(res, 403);
-	req.socket.setTimeout(60*1000+100);
 
 	var headers = filterHeader(req.headers);
 
@@ -453,10 +461,10 @@ function _handleRequest(req, res) {
 	parsed.headers = headers;
 
 	// use keep-alive http agents
-	var host = parsed.host;
-	var agent = pacProxy.httpAgents.get(host);
+	let host = parsed.host;
+	let agent = pacProxy.httpAgents.get(host);
 	if (!agent) {
-		agent =  new http.Agent({ keepAlive: true});
+		agent =  newAgent();
 		pacProxy.httpAgents.set(host,agent);
 	}
 	parsed.agent = agent;
@@ -488,7 +496,6 @@ function handleConnect(req, socket) {
 
 function _handleConnect(req, socket) {
 	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
-	socket.setTimeout(60*1000+100);
     try {
 		visitorIP = req.socket.remoteAddress;
 		log('%s %s %s ', visitorIP, req.method, req.url);
@@ -501,9 +508,18 @@ function _handleConnect(req, socket) {
 			else  return socketResponse(socket, 'HTTP/1.1 500 Internal Server Error\r\n');
 		}
 
-        var ropts = {
-            host: req.url.split(':')[0],
-            port: req.url.split(':')[1] || 443
+		let vhost = req.url.split(':')[0];
+		let vport = req.url.split(':')[1] || 443;
+		let vagent = pacProxy.httpsAgents.get(vhost);
+		if (!vagent) {
+			vagent =  newAgent(true);
+			pacProxy.httpsAgents.set(vhost,vagent);
+		}
+
+		var ropts = {
+            host: vhost,
+            port: vport,
+			agent: vagent
         };
 
 		transfer = (error) =>  {
