@@ -25,8 +25,8 @@
 * 上敏感网站需要用浏览器的匿名模式，尽量访问https:// 的加密网站
 
 * 服务器IP如果封锁了也可随时更换，所以IP被封短时上不了网不要紧，通知服务器管理人员更换IP，先保存当前域名和PAC链接
-
-* HTTPS
+ 
+* 由于常见的DOH服务器经常会被封锁，而Firefox如果加密DNS失败则会自动切换为本机的DNS, 可以用本机hosts记录代替使用加密DNS. 需要用加密DNS服务时，可以[用CDN中转DOH服务](https://github.com/httpgate/wssproxy-agent/blob/main/CDN_PROXY_DOH.md)，避免加密DNS封锁。
 
 
 ## 全局代理，仅限国外品牌的原装手机/平板：
