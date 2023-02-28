@@ -586,16 +586,11 @@ function _handleConnect(req, socket) {
 
 		let vhost = req.url.split(':')[0];
 		let vport = req.url.split(':')[1] || 443;
-		let vagent = pacProxy.httpsAgents.get(vhost);
-		if (!vagent) {
-			vagent =  newAgent(true);
-			pacProxy.httpsAgents.set(vhost,vagent);
-		}
 
 		var ropts = {
             host: vhost,
             port: vport,
-			agent: vagent
+			keepAlive: true
         };
 
 		transfer = (error) =>  {
@@ -639,9 +634,9 @@ function handleWebsocket(ws, req) {
 	let suburl = req.url.slice(pacProxy.configs.paclink.length);
 	log('%s %s %s ', visitorIP, 'WSS', suburl);
 
-	if(!suburl) var tolocal = { host: '127.0.0.1', port: pacProxy.configs.innerport};
-	else if(suburl.toLowerCase() == '/tls')  var tolocal = { host: '127.0.0.1', port: pacProxy.configs.tlsport};
-	else if(suburl.toLowerCase() == '/pac')  var tolocal = { host: '127.0.0.1', port: pacProxy.configs.pacport};
+	if(!suburl) var tolocal = { host: '127.0.0.1', port: pacProxy.configs.innerport, keepAlive: true};
+	else if(suburl.toLowerCase() == '/tls')  var tolocal = { host: '127.0.0.1', port: pacProxy.configs.tlsport, keepAlive: true};
+	else if(suburl.toLowerCase() == '/pac')  var tolocal = { host: '127.0.0.1', port: pacProxy.configs.pacport, keepAlive: true};
 	else return ws.close(1011, "authentication failed");
 
 	try{
