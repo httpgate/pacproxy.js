@@ -308,7 +308,7 @@ function isLocalHost(host) {
 function isLocalIP(address) {
 	if(!address) return true;
 	if(address.includes('::')) return true;  //ipv6 native ip
-	if(address.startsWith('192.168') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254')) return true;
+	if(address.startsWith('192.168.') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254.')) return true;
 	return false;
 }
 
