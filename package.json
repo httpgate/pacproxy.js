@@ -15,7 +15,9 @@
     "https",
     "nodejs",
     "vpn",
-    "ssl"
+    "ssl",
+    "websocket",
+    "cdn"
   ],
   "author": "xinjingjie.us@gmail.com",
   "license": "GPL-3.0-or-later",
