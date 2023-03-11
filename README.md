@@ -40,6 +40,19 @@ node pacproxy.js [网站配置文件] [监听端口号]
 
 如：node pacproxy.js ./example.site.domain/production.cfg 3129
 
+其中[网站配置文件] [监听端口号] 均为可选参数
+
+
+### 后台运行
+
+推荐用pm2：
+
+pm2 start default.config.js
+
+也可以用nohup:
+
+nohup ./pacproxy.js ./example.site.domain/production.cfg &
+
 
 ## VPS服务器部署
 

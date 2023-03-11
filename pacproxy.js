@@ -105,6 +105,7 @@ exports.proxy = proxy;
 exports.handleRequest = handleRequest;    //use it like: server.on('request', pacproxy.handlerRequest)
 exports.handleRequestBehindTunnel = handleRequestBehindTunnel;    //use it like: server.on('request', pacproxy.handleRequestBehindTunnel)
 exports.merge = merge;
+exports.run = run;
 
 function proxy(configs) {
 	if(!configs) configs = configsInCode;
@@ -207,16 +208,20 @@ function gErrorHandler(e) {
  */
 
 // uncomment to run
-run();
+if(process.argv[1].includes(__filename)) run();
 
 function run() {
-	if(!process.argv[1].includes(__filename)) return;  //used as a module
     var configs = getConfigs();
 	proxy(configs);
 }
 
 function getConfigs(){
-	if(!process.argv[2]) return configsInCode;
+
+	if(!process.argv[2]){ 
+		if(process.env.PORT) configsInCode.port = process.env.PORT;
+		return configsInCode;
+	}
+
 	if(!isNaN(process.argv[2])){
 		configsInCode.port = process.argv[2];
 		return configsInCode;
@@ -373,6 +378,8 @@ function basicAuthentication(request) {
 }
 
 function response(res, httpCode, headers, content) {
+	res.on('error', gErrorHandler);
+
 	if(headers) res.writeHead(httpCode, headers);
 	else res.writeHead(httpCode);
 
@@ -417,6 +424,7 @@ function requestRemote(parsed, req, res) {
 		endRequest();
 	});
 
+	res.on('error', endRequest);
 	res.on('close', endRequest);
 	req.socket.on('close', endRequest);
 	req.socket.on('error', endRequest);
