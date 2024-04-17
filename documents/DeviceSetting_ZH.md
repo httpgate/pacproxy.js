@@ -33,7 +33,7 @@
 
 * 主流浏览器除Safari外，都支持pacproxy。但很多非浏览器app不支持pacproxy的https加密协议，可以用[SSL TUNNEL](https://play.google.com/store/apps/details?id=eu.smallapps.tunnel) 或 [Stunnel](https://play.google.com/store/apps/details?id=link.infra.sslsockspro) 将pacproxy转为普通的内网proxy, 同时将https://PACURL替换为相应的内网 http://pacurl , 详情可参考[参考示例](https://github.com/httpgate/resources/blob/main/README.md)
 
-* 苹果手机平板, 由于Safari不支持https加密代理，其他浏览器都是Safari内核，所以暂不支持pacproxy
+* 苹果手机平板, 由于ios Safari不支持https加密代理，其他浏览器在ios上必须用Safari内核，所以暂不支持pacproxy
 
 * 设置全局pacproxy的话，其他软件就也能上网，设备上尽量不要安装任何国产软件
 
