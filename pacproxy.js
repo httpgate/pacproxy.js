@@ -119,6 +119,8 @@ function proxy(configs) {
 	
 	if(!pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
 
+	if(pacProxy.configs.pacpass.length==3) pacProxy.proxyAuth = generateBasicAuth(pacProxy.configs.pacpass[1],pacProxy.configs.pacpass[2]);
+
 	event.EventEmitter.prototype._maxListeners = 500;
 	event.defaultMaxListeners = 500;
 
@@ -149,6 +151,13 @@ function proxy(configs) {
 	if(pacProxy.configs.websocket) initInnerServer();	
 	configs.server = server;
 	return server;
+}
+
+function generateBasicAuth(user, password)
+{
+    var token = user + ":" + password;
+    var hash = btoa(token); 
+    return "Basic " + hash;
 }
 
 function newAgent(ssl = false){
@@ -292,7 +301,7 @@ function pacContent(userAgent, vbrowser) {
 				if(userAgent.includes(normalBrowser['edge'])) return pacDirect;
 				if(userAgent.includes(normalBrowser['opera'])) return pacDirect;
 			}
-		} else {
+		} else if(!userAgent.includes(vbrowser)){
 			return pacDirect;
 		}
 	}
@@ -352,28 +361,11 @@ function authenticateNoIP(req) {
 
 function basicAuthentication(request) {
 	if(pacProxy.configs.pacpass.length!==3) return false;
+	if(!pacProxy.proxyAuth) return false;
 	let Authorization = request.headers['proxy-authorization'];
 	if(!Authorization) return false;
-	if(pacProxy.proxyAuth) {
-		if (pacProxy.proxyAuth==Authorization) return true;
-		else return false;
-	}
+	if (pacProxy.proxyAuth==Authorization) return true;
 
-	const [scheme, encoded] = Authorization.split(' ');
-	if (!encoded || scheme !== 'Basic') return false;
-
-	const buffer = Uint8Array.from(Buffer.from(encoded, 'base64').toString('binary'), (character) =>
-	  character.charCodeAt(0)
-	);
-	const decoded = new TextDecoder().decode(buffer).normalize();
-	const index = decoded.indexOf(':');
-	if (index === -1 || /[\0-\x1F\x7F]/.test(decoded)) return false;
-	let vuser = decoded.substring(0, index);
-	let vpass = decoded.substring(index + 1);
-	if((vuser==pacProxy.configs.pacpass[1]) && (vpass==pacProxy.configs.pacpass[2])) {
-		pacProxy.proxyAuth = Authorization;
-		return true;
-	}
 	return false;
 }
 
@@ -456,6 +448,11 @@ function handleWebsite(req, res, parsed) {
 		if ((!pacProxy.configs.behindTunnel) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 			pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
+			if((req.headers.host.startsWith('127.0.0.1') || req.headers.host.startsWith('localhost')) && req.url.startsWith('/pac')) {
+				if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
+				let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
+				return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
+			}			
 			return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		}
 
