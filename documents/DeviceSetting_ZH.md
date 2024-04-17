@@ -6,9 +6,9 @@
 
 * Windows下载[海外firefox浏览器](https://www.mozilla.org/en-US/firefox/new/), Firefox->菜单：设置(Settings)->搜索：网络(Network)->(Automatic proxy configuration URL)自动代理服务器设置链接->输入：https://PACURL ->选(Enable DNS over HTTPS)启用加密DNS->点(OK)确认.
 
-* Android要安装[firefox nightly build](https://play.google.com/store/apps/details?id=org.mozilla.fenix )（可[下载apk自己安装](https://www.apkmirror.com/apk/mozilla/firefox-fenix))， 在Firefox地址栏中输入about:config，在出现的搜索框中，键入proxy点搜索按钮。从下面列出的相关选项中，找到network.proxy.type更改为2，找到network.proxy.autoconfig_url更改为 https://PACURL .  再搜索栏键入trr, 从列出选项中找到network.trr.mode改为2，network.trr.odoh.enabled改为true，network.trr.uri更改为https://mozilla.cloudflare-dns.com/dns-query 。
+* Android要安装[firefox nightly build](https://play.google.com/store/apps/details?id=org.mozilla.fenix )（可[下载apk自己安装](https://www.apkmirror.com/apk/mozilla/firefox-fenix))， 在Firefox地址栏中输入about:config，在出现的搜索框中，键入proxy点搜索按钮。从下面列出的相关选项中，找到network.proxy.type更改为2，找到network.proxy.autoconfig_url更改为 https://PACURL .  再搜索栏键入trr, 从列出选项中找到network.trr.mode改为2，network.trr.uri更改为 https://mozilla.cloudflare-dns.com/dns-query 。
 
-* IPAD/IPhone上的firefox是Safari内核，不能单独设置代理。苹果电脑则可以用firefox没有问题
+* IPAD/IPhone上的firefox是Safari内核，不能单独设置代理。苹果MAC电脑则可以用firefox没有问题
 
 * 如果提示输入代理用户名/密码，需要2分钟内输入正确用户名密码，否则需要重新打开浏览器
 
@@ -24,10 +24,8 @@
 
 * 上敏感网站需要用浏览器的匿名模式，尽量访问https:// 的加密网站
 
-* 服务器IP如果封锁了也可随时更换，所以IP被封短时上不了网不要紧，通知服务器管理人员更换IP，先保存当前域名和PAC链接
+* 服务器IP如果封锁了也可随时更换，所以IP被封短时上不了网不要紧，通知服务器管理人员更换IP，先保存当前域名和PAC链接.
  
-* 由于常见的DOH服务器经常会被封锁，而Firefox如果加密DNS失败则会自动切换为本机的DNS, 可以用本机hosts记录代替使用加密DNS. 需要用加密DNS服务时，可以[用CDN中转DOH服务](https://github.com/httpgate/wssproxy-agent/blob/main/CDN_PROXY_DOH.md)，避免加密DNS封锁。
-
 
 ## 全局代理，仅限国外品牌的原装手机/平板：
 
