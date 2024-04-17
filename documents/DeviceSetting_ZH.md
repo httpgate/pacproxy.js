@@ -29,9 +29,9 @@
 
 ## 全局代理，仅限国外品牌的原装手机/平板：
 
-* Android安卓系统，长按wifi连接，双击家里的wifi名，点屏幕右上角编辑图标，选(Advanced Setting)高级设置->代理(Proxy)->选自动设置(Auto-config)->输入PAC网络地址(PAC Web Address)： https://PACURL->点(Save)保存,  如果仅firefox翻墙, 则输入: https://PACURL/firefox
+* Android安卓系统，长按wifi连接，双击家里的wifi名，点屏幕右上角编辑图标，选(Advanced Setting)高级设置->代理(Proxy)->选自动设置(Auto-config)->输入PAC网络地址(PAC Web Address)： https://PACURL->点(Save)保存,  如果仅firefox翻墙, 则输入: https://PACURL/firefox (不适用于firefox Nightly版本)
 
-* 主流浏览器都支持pacproxy。但很多非浏览器app不支持pacproxy的https加密协议，可以用[SSL TUNNEL](https://play.google.com/store/apps/details?id=eu.smallapps.tunnel) 或 [Stunnel](https://play.google.com/store/apps/details?id=link.infra.sslsockspro) 将pacproxy转为普通的内网proxy, 同时将https://PACURL替换为相应的内网 http://pacurl , 详情可参考[参考示例](https://github.com/httpgate/resources/blob/main/README.md)
+* 主流浏览器都支持pacproxy。但很多非浏览器app不支持pacproxy的https加密协议，可以用 [Stunnel](https://play.google.com/store/apps/details?id=link.infra.sslsockspro) 将pacproxy转为普通的内网proxy, 同时将https://PACURL替换为相应的内网 http://pacurl , 详情可参考[参考示例](https://github.com/httpgate/resources/blob/main/README.md)
 
 * 苹果手机平板, 由于ios Safari不支持https加密代理，其他浏览器在ios上必须用Safari内核，所以暂不支持pacproxy
 

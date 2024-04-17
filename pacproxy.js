@@ -448,7 +448,7 @@ function handleWebsite(req, res, parsed) {
 		if ((!pacProxy.configs.behindTunnel) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 			pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
-			if((req.headers.host.startsWith('127.0.0.1') || req.headers.host.startsWith('localhost')) && req.url.startsWith('/pac')) {
+			if((req.headers.host.startsWith('127.0.0.1') || req.headers.host.startsWith('localhost'))) {
 				if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
 				let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
 				return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
