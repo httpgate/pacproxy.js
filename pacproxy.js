@@ -70,7 +70,6 @@ const https = require('https');
 const net = require('net');
 const event = require('events');
 const fs = require('fs');
-const path = require('path');
 
 /**
  * Constants
@@ -85,7 +84,6 @@ const pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
 this.configs = false;
 this.server = false;
 this.httpAgents = new Map();
-this.httpsAgents = new Map();
 this.websiteAgent =  newAgent();
 this.websiteParsed = false;
 this.proxyClients = new Map();
@@ -115,7 +113,7 @@ function proxy(configs) {
 	pacProxy.ipMilliSeconds = pacProxy.configs.iphours * 3600 * 1000;
 	if(pacProxy.configs.website) pacProxy.websiteParsed = new URL(pacProxy.configs.website);
 	if(pacProxy.websiteParsed.host && isLocalHost(pacProxy.websiteParsed.host)) pacProxy.configs.website = false;
-	else if(pacProxy.websiteParsed.protocol && (pacProxy.websiteParsed.protocol=='https')) pacProxy.configs.website = newAgent(true);
+	else if(pacProxy.websiteParsed.protocol && (pacProxy.websiteParsed.protocol=='https:')) pacProxy.websiteAgent = newAgent(true);
 	
 	if(!pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
 
@@ -501,6 +499,7 @@ function handleWebsite(req, res, parsed) {
 		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
 		parsed.protocol = pacProxy.websiteParsed.protocol;
 		parsed.host = pacProxy.websiteParsed.host;
+		headers.host = pacProxy.websiteParsed.host;
 		parsed.port = pacProxy.websiteParsed.port;
 		parsed.method = req.method;
 		parsed.headers = headers;
