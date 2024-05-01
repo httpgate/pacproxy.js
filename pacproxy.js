@@ -22,6 +22,9 @@ const configsInCode = {
 	// set to 443 if https is true
 	proxyport : 3128,
 
+	// proxy public ip, use when a vps has multiple public ips but only use one ip
+	proxyip : '0.0.0.0',	
+
 	// you will share your pacurl as: https://your.proxy.domain/paclink , please change it to a long random '/xxxxxxxx'
 	// if behindtunnel is true paclink will not work as pacurl
 	paclink : '/0000000000000000',
@@ -394,6 +397,10 @@ function requestRemote(parsed, req, res) {
 	let agent = http;
 	if(parsed.protocol == 'https:') agent = https;
 
+	if(pacProxy.configs.proxyip != '0.0.0.0'){
+		parsed.localAddress = pacProxy.configs.proxyip;
+	}
+
 	var proxyReq = agent.request(parsed, function(proxyRes) {
 		if(isLocalIP(proxyRes.socket.remoteAddress)) return endRequest();
 
@@ -621,6 +628,10 @@ function _handleConnect(req, socket) {
 			keepAlive: true
         };
 
+		if(pacProxy.configs.proxyip != '0.0.0.0'){
+			ropts.localAddress = pacProxy.configs.proxyip;
+		}
+	
 		transfer = (error) =>  {
 			try{
 				gotResponse = true;
