@@ -59,10 +59,7 @@ const configsInCode = {
 	cert : '',
 
 	// ssl key file, default is {certdir}/{domain}/privkey.pem
-	key : '',
-
-	// Skip register server.on("request",pacproxy.handlerequest), it can be registered outside
-	skiprequest : false
+	key : ''
 };
 
 /**
@@ -73,6 +70,7 @@ const https = require('https');
 const net = require('net');
 const event = require('events');
 const fs = require('fs');
+const { config } = require('process');
 
 /**
  * Constants
@@ -107,6 +105,7 @@ exports.handleRequest = handleRequest;    //use it like: server.on('request', pa
 exports.handleRequestBehindTunnel = handleRequestBehindTunnel;    //use it like: server.on('request', pacproxy.handleRequestBehindTunnel)
 exports.merge = merge;
 exports.run = run;
+exports.startServer = startServer;
 
 function proxy(configs) {
 	if(!configs) configs = configsInCode;
@@ -125,16 +124,22 @@ function proxy(configs) {
 	event.EventEmitter.prototype._maxListeners = 500;
 	event.defaultMaxListeners = 500;
 
-	server = configs.server;
-	if(!server) server = createServer();
+	if(configs.skipServer) return;
+
+	return startServer();
+}
+
+
+function bindServer(server) {
+
 	if(pacProxy.configs.behindTunnel){
 		server.on('connect', handleConnectBehindTunnel);
-		if(!configs.skiprequest) server.on('request', handleRequestBehindTunnel);
+		server.on('request', handleRequestBehindTunnel);
 	} else {
 		server.on('connect', handleConnect);
-		if(!configs.skiprequest) server.on('request', handleRequest);
+		server.on('request', handleRequest);
 	}
-	if(!configs.server) server.listen(pacProxy.configs.port, () => {
+	server.listen(pacProxy.configs.port, () => {
 		console.log(
 			'\r\npac proxy server listening on port %d,\r\nshare your pac url:  \r\n%s',
 			server.address().port, getShareLink('http')
@@ -147,21 +152,27 @@ function proxy(configs) {
 		);
 	});
 	server.on("error", err=>console.log(err));
-
-	pacProxy.server = server;
-	if(pacProxy.configs.websocket) initInnerServer();	
-	configs.server = server;
-	return server;
 }
 
-function generateBasicAuth(user, password)
-{
+
+function startServer() {
+
+	server = createServer();
+	bindServer(server);
+	pacProxy.server = server;
+
+	if(pacProxy.configs.websocket) initInnerServer();
+	return server;
+
+}
+
+function generateBasicAuth(user, password) {
     var token = user + ":" + password;
     var hash = btoa(token); 
     return "Basic " + hash;
 }
 
-function newAgent(ssl = false){
+function newAgent(ssl = false) {
 	if(ssl) return new https.Agent({keepAlive: true, timeout: 300000, maxCachedSessions: 200 });
 	else return new http.Agent({ keepAlive: true, timeout: 300000});
 }
@@ -410,8 +421,7 @@ function requestRemote(parsed, req, res) {
 
 		res.writeHead(proxyRes.statusCode, headers);
 		proxyRes.pipe(res);
-		res.on('finish', endRequest);
-
+		res.on('close', endRequest);
 	});
 	
 	proxyReq.on('error',  (err) => {
@@ -428,10 +438,11 @@ function requestRemote(parsed, req, res) {
 
 	function endRequest() {
 		try{
-			req.socket.end()			
+			req.socket.end();
 			req.socket.removeListener('close', endRequest);
+			req.socket.removeListener('error', endRequest);
 			proxyReq.end();
-			res.removeListener('finish', endRequest);
+			res.removeListener('close', endRequest);
 			res.removeListener('error', endRequest);
 		} catch (e) {
 			log('%s Error %s ', visitorIP, e.message);
