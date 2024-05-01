@@ -1,6 +1,6 @@
 {
   "name": "pacproxy-js",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "A https proxy server use pac url to authorize access, it also support websocket and CDN relay",
   "main": "pacproxy.js",
   "scripts": {

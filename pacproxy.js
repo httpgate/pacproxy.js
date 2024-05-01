@@ -184,9 +184,6 @@ function merge(vmain, vdefault){
 }
 
 function initInnerServer() {
-	if(pacProxy.configs.forcert) return;
-	if(pacProxy.configs.server) return;
-
 	pacProxy.innerServer = http.createServer();
 	pacProxy.innerServer.on('connect', _handleConnect);
 	pacProxy.innerServer.on('request', _handleRequest);
@@ -404,7 +401,7 @@ function socketResponse(socket, content, cb) {
 function requestRemote(parsed, req, res) {
 	var gotResponse = false;
 
-	log('%s Fetch %s ', visitorIP, parsed);
+	log('%s Fetch %s ', visitorIP, parsed.toString());
 	let agent = http;
 	if(parsed.protocol == 'https:') agent = https;
 
@@ -412,7 +409,7 @@ function requestRemote(parsed, req, res) {
 		parsed.localAddress = pacProxy.configs.proxyip;
 	}
 
-	var proxyReq = agent.request(parsed, function(proxyRes) {
+	var proxyReq = agent.get(parsed, function(proxyRes) {
 		if(isLocalIP(proxyRes.socket.remoteAddress)) return endRequest();
 
 		let headers = filterHeader(proxyRes.headers);
