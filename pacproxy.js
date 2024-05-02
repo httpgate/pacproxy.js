@@ -72,6 +72,19 @@ const event = require('events');
 const fs = require('fs');
 const { config } = require('process');
 
+global.Buffer = global.Buffer || require('buffer').Buffer;
+
+if (typeof btoa === 'undefined') {
+  global.btoa = function (str) {
+    return new Buffer(str, 'binary').toString('base64');
+  };
+}
+
+if (typeof atob === 'undefined') {
+  global.atob = function (b64Encoded) {
+    return new Buffer(b64Encoded, 'base64').toString('binary');
+  };
+}
 /**
  * Constants
  */
@@ -99,7 +112,6 @@ const pacProxy = this;
 /**
  * Export Module functions
  */
-
 exports.proxy = proxy;
 exports.handleRequest = handleRequest;    //use it like: server.on('request', pacproxy.handlerRequest)
 exports.handleRequestBehindTunnel = handleRequestBehindTunnel;    //use it like: server.on('request', pacproxy.handleRequestBehindTunnel)
