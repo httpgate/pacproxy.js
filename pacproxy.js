@@ -411,7 +411,6 @@ function socketResponse(socket, content, cb) {
 }
 
 function requestRemote(parsed, req, res) {
-	var gotResponse = false;
 
 	log('%s Fetch %s ', visitorIP, parsed.toString());
 	let agent = http;
@@ -421,44 +420,34 @@ function requestRemote(parsed, req, res) {
 		parsed.localAddress = pacProxy.configs.proxyip;
 	}
 
-	var proxyReq = agent.get(parsed, function(proxyRes) {
-		if(isLocalIP(proxyRes.socket.remoteAddress)) return endRequest();
+	req.on('error', ()=>req.socket.end());
+	res.on('error', ()=>req.socket.end());
 
-		let headers = filterHeader(proxyRes.headers);
+	gotResponse = false;
+	proxyReq = agent.get(parsed, function(proxyRes) {
+		if(isLocalIP(proxyRes.socket.remoteAddress)) return response(res,403);
 
+		res.on('error', ()=>proxyRes.socket.end());
+		proxyRes.on('error', ()=>req.socket.end());
+
+		if (gotResponse) return;
 		gotResponse = true;
-
+		let headers = filterHeader(proxyRes.headers);
 		res.writeHead(proxyRes.statusCode, headers);
 		proxyRes.pipe(res);
-		res.on('close', endRequest);
+		if(!req.closed)
+			req.pipe(proxyReq);
 	});
 	
 	proxyReq.on('error',  (err) => {
+		log('%s REQUEST %s ', visitorIP, err);
 		if (gotResponse) {}
 		else if ('ENOTFOUND' == err.code) response(res,400);
 		else response(res,500);
-		endRequest();
+		gotResponse = true;
+		req.socket.end();
 	});
 
-	res.on('error', endRequest);
-	res.on('close', endRequest);
-	req.socket.on('close', endRequest);
-	req.socket.on('error', endRequest);
-
-	function endRequest() {
-		try{
-			req.socket.end();
-			req.socket.removeListener('close', endRequest);
-			req.socket.removeListener('error', endRequest);
-			proxyReq.end();
-			res.removeListener('close', endRequest);
-			res.removeListener('error', endRequest);
-		} catch (e) {
-			log('%s Error %s ', visitorIP, e.message);
-		}		
-	}
-
-	req.pipe(proxyReq);
 }
 
 
