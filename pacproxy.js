@@ -151,7 +151,7 @@ function bindServer(server) {
 		server.on('connect', handleConnect);
 		server.on('request', handleRequest);
 	}
-	server.listen(pacProxy.configs.port, () => {
+	server.listen(pacProxy.configs.port, pacProxy.configs.proxyip, () => {
 		console.log(
 			'\r\npac proxy server listening on port %d,\r\nshare your pac url:  \r\n%s',
 			server.address().port, getShareLink('http')
