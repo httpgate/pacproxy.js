@@ -433,7 +433,10 @@ function requestRemote(parsed, req, res) {
 		if (gotResponse) return;
 		gotResponse = true;
 		let headers = filterHeader(proxyRes.headers);
-		res.writeHead(proxyRes.statusCode, headers);
+
+		let statusCode = proxyRes.statusCode ? proxyRes.statusCode : 200;
+		res.writeHead(statusCode, headers);
+
 		proxyRes.pipe(res);
 		if(!req.closed)
 			req.pipe(proxyReq);
