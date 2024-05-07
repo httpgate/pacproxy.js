@@ -1,11 +1,12 @@
 # pacproxy加密代理服务器
 
 [English Readme:](\/documents\/README_EN\.md)
-* 普通proxy代理服务器为防止盗用，需要用采用代理密码验证，请求密码时会被识别为代理服务器而被封锁。
-* pacproxy利用加密的pac url代替basic auth, 且用https加密流量，达到安全隐身的效果。
+* 普通proxy代理服务器有明显的特征，容易被识别和封锁。pacproxy可伪装成普通网站，难于识别和封锁。
+* 普通代理服务会泄露访问的网站和http内容，pacproxy且用https加密流量，达到安全隐身的效果。
+* pacproxy比普通proxy更安全，比vpn速度快占用资源少，很适合搭梯子翻墙使用。
 * pacproxy[支持websocket](https://github.com/httpgate/wssproxy-agent), 可利用各种开启websocket的CDN, Application Gateway中转流量。
 * pacproxy可以部署到支持nodejs聊天室的服务容器内，可以在Nginx,Litespeed Web Server内部署，此时就仅支持websocket代理
-* 阻止通过代理访问内网的常见IP段：192.168.xx, 10.xxx, 127.xxx, 169.254.xx 以及常见内网ipv6地址
+* 阻止通过代理访问内网的常见IP段：192.168.xx, 10.xxx等，以及常见内网ipv6地址，可安全的部署在家里或公司的电脑上。
 
 
 ## 推荐
@@ -26,6 +27,11 @@
 * 用wssurl翻墙请参照 [wssagent代理软件](https://github.com/httpgate/wssproxy-agent)
 
 * 搭建pacproxy服务器需要[申请一个域名](\/documents\/About_Domain_ZH.md)
+
+
+## VPS服务器部署
+
+参见 [pacproxy服务器](https://github.com/httpgate/pacproxy-server)
 
 
 ## 直接部署
@@ -52,11 +58,6 @@ pm2 start default.config.js
 也可以用nohup:
 
 nohup ./pacproxy.js ./example.site.domain/production.cfg &
-
-
-## VPS服务器部署
-
-参见 [pacproxy服务器](https://github.com/httpgate/pacproxy-server)
 
 
 ## 手机部署
