@@ -70,7 +70,6 @@ const https = require('https');
 const net = require('net');
 const event = require('events');
 const fs = require('fs');
-const { config } = require('process');
 
 global.Buffer = global.Buffer || require('buffer').Buffer;
 
@@ -107,6 +106,7 @@ this.ipMilliSeconds = 0;
 this.innerServer = false;
 this.tlsServer = false;
 this.proxyAuth = false;
+this.WebSocket = false;
 const pacProxy = this;
 
 /**
@@ -203,8 +203,8 @@ function initInnerServer() {
 		pacProxy.configs.innerport = pacProxy.innerServer.address().port; 
 		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss url:  \r\n%s\r\n',
 		pacProxy.configs.innerport, getShareLink('ws'));
-		var WebSocket = require("ws");
-		var ws = new WebSocket.Server({ server: pacProxy.server });
+		pacProxy.WebSocket = require("ws");
+		var ws = new pacProxy.WebSocket.Server({ server: pacProxy.server });
 		ws.on("connection", handleWebsocket);
 	});
 
@@ -425,7 +425,7 @@ function requestRemote(parsed, req, res) {
 	res.on('error', ()=>req.socket.end());
 
 	let gotResponse = false;
-	proxyReq = agent.get(parsed, function(proxyRes) {
+	proxyReq = agent.request(parsed, function(proxyRes) {
 		if(isLocalIP(proxyRes.socket.remoteAddress)) return response(res,403);
 
 		res.on('error', ()=>proxyRes.socket.end());
@@ -439,7 +439,6 @@ function requestRemote(parsed, req, res) {
 		res.writeHead(statusCode, headers);
 
 		proxyRes.pipe(res);
-
 	});
 	
 	proxyReq.on('error',  (err) => {
@@ -451,8 +450,9 @@ function requestRemote(parsed, req, res) {
 		req.socket.end();
 	});
 
-	if(!req.closed)
-		req.pipe(proxyReq);	
+	req.on('end', ()=>proxyReq.end());
+	if(!req.writableEnded) req.pipe(proxyReq);
+	else proxyReq.end();	
 }
 
 
@@ -694,14 +694,15 @@ function handleWebsocket(ws, req) {
 	else if(suburl.toLowerCase() == '/pac')  var tolocal = { host: '127.0.0.1', port: pacProxy.configs.pacport, keepAlive: true};
 	else return ws.close(1011, "authentication failed");
 
+	let duplex = pacProxy.WebSocket.createWebSocketStream(ws);
 	try{
 		var tunnel = net.createConnection(tolocal)
-		ws.on('close', () => tunnel.end());
-		ws.on('error', () => tunnel.end());
+		duplex.on('close', () => tunnel.end());
+		duplex.on('error', () => tunnel.end());
 		tunnel.on('end', () => ws.close(1000));
 		tunnel.on('error', () => ws.close(1000));  
-		tunnel.on('data', data => ws.send(data));	
-		ws.on('message', data => tunnel.write(data));
+		duplex.pipe(tunnel);
+		tunnel.pipe(duplex);
 	} catch (e) {
 		log('%s Error %s ', visitorIP, e.message);
 	}
