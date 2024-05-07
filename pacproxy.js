@@ -343,8 +343,9 @@ function isLocalHost(host) {
 function isLocalIP(address) {
 	if(!address) return true;
 	if(address.startsWith('::ffff:') || address.startsWith('::FFFF:')) address = address.slice(7);
-	if(address.includes('::')) return true;  //ipv6 native ip
-	if(address.startsWith('192.168.') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254.')) return true;
+	if(address.startsWith('::') || address.startsWith('0')) return true;
+	if(address.startsWith('fc') || address.startsWith('fe')) return true;
+	if(address.startsWith('192.168.') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254.') || address.startsWith('172.16')) return true;
 	return false;
 }
 
@@ -423,7 +424,7 @@ function requestRemote(parsed, req, res) {
 	req.on('error', ()=>req.socket.end());
 	res.on('error', ()=>req.socket.end());
 
-	gotResponse = false;
+	let gotResponse = false;
 	proxyReq = agent.get(parsed, function(proxyRes) {
 		if(isLocalIP(proxyRes.socket.remoteAddress)) return response(res,403);
 
@@ -438,8 +439,7 @@ function requestRemote(parsed, req, res) {
 		res.writeHead(statusCode, headers);
 
 		proxyRes.pipe(res);
-		if(!req.closed)
-			req.pipe(proxyReq);
+
 	});
 	
 	proxyReq.on('error',  (err) => {
@@ -451,17 +451,21 @@ function requestRemote(parsed, req, res) {
 		req.socket.end();
 	});
 
+	if(!req.closed)
+		req.pipe(proxyReq);	
 }
 
 
 /**
  * check if request is from stunnel (or similar ssl tunnel)
  */
-function fromStunnel(req) {
+function fromStunnel(host) {
 	if(!pacProxy.configs.https) return false;
-	if(!req.headers.host.split(':')[1]) return false;
-	if(req.headers.host.split(':')[1] == pacProxy.configs.port) return false;
-	if(req.headers.host.startsWith('127.0.0.1') || req.headers.host.startsWith('localhost')){
+	if(!pacProxy.configs.domain=="localhost") return false;
+	if(!host) return false;
+	if(!host.split(':')[1]) return false;
+	if(host.split(':')[1] == pacProxy.configs.port) return false;
+	if(host.startsWith('127.0.0.1') || host.startsWith('localhost')){
 		return true;
 	} else return false;
 }
@@ -475,12 +479,18 @@ function handleWebsite(req, res, parsed) {
 		visitorIP = req.socket.remoteAddress;
 		log('%s %s %s ', visitorIP, req.headers.host, req.url);
 
+		try{
+			if(! parsed) parsed = new URL('https://'+pacProxy.configs.domain + req.url);
+		} catch (e) {
+			return  response(res, 403);
+		}
+
 		if ((!pacProxy.configs.behindTunnel) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
 			pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
 
-			if(fromStunnel(req)){
+			if(fromStunnel(parsed.host)){
 				let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
 				return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
 			}
@@ -496,7 +506,7 @@ function handleWebsite(req, res, parsed) {
 			if(!pacProxy.configs.behindTunnel) pacProxy.proxyUsers.set(visitorIP,[Date.now()+120000, req.headers['user-agent']]);
 			else if(req.headers['user-agent']) pacProxy.proxyAgents.set(req.headers['user-agent'], Date.now()+120000);
 
-			if(fromStunnel(req)){
+			if(fromStunnel(parsed.host)){
 				let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
 				return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
 			}
@@ -506,14 +516,8 @@ function handleWebsite(req, res, parsed) {
 
 		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
 
-		try{
-			if(! parsed) parsed = new URL('http://'+pacProxy.configs.domain + req.url);
-		} catch (e) {
-			return  response(res, 403);
-		}
-
+ 	    if ((!parsed.host) || (parsed.host.split(':')[0] != pacProxy.configs.domain))  return response(res, 403);
 		var headers = filterHeader(req.headers);
- 	    if ((! 'host' in headers) || (headers.host.split(':')[0] != pacProxy.configs.domain))  return response(res, 403);
 
 		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
 		parsed.protocol = pacProxy.websiteParsed.protocol;
