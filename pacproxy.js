@@ -43,8 +43,8 @@ const configsInCode = {
 	// need to "npm install ws", it will create a inner proxy server to handle websocket traffic	
 	websocket : false,
 
-	// http(s) server created outside, if empty proxy will create a http(s) server	
-	server : false,
+	// if false proxy will create a http(s) server	
+	skipServer : false,
 
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
 	onrequest : (req, res) => {response(res,403);},
@@ -488,7 +488,7 @@ function handleWebsite(req, res, tunnelRequest=false) {
 		if ((!pacProxy.configs.behindTunnel) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
-			pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
+			if(!tunnelRequest) pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
 
 			if(fromStunnel(parsed.host)){
 				let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;

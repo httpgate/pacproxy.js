@@ -6,7 +6,7 @@
 * pacproxy更安全，比vpn速度快占用资源少，很适合在配置低的设备上运行。
 * pacproxy[支持websocket](https://github.com/httpgate/wssproxy-agent), 可利用各种开启websocket的CDN中转流量,支持cloudflare, cloudfront等。
 * pacproxy可以部署到支持nodejs聊天室的服务容器内，可以在Nginx,Litespeed Web Server内部署，此时就仅支持websocket代理
-* 阻止通过代理访问内网的常见IP段：192.168.xx, 10.xxx等，以及常见内网ipv6地址，可安全的部署在家里或公司的电脑上。
+* 阻止通过代理访问内网的常见IP段：192.168.xx, 10.xxx等，以及常见内网ipv6地址，方便在家用网络部署。
 
 
 ## 推荐
