@@ -18,8 +18,8 @@ const configsInCode = {
 	// proxy listening port, if Port Forwarding, it's Internal Port.
 	port : 3128,
 
-	// proxy access port, if Port Forwarding, it's External Port
-	// set to 443 if https is true
+	// proxy access port, only used to show in the pac url links
+	// if Port Forwarding, it's External Port, normally set to 443 if https is true
 	proxyport : 3128,
 
 	// proxy public ip, use when a vps has multiple public ips but only use one ip
@@ -43,8 +43,8 @@ const configsInCode = {
 	// need to "npm install ws", it will create a inner proxy server to handle websocket traffic	
 	websocket : false,
 
-	// if false proxy will create a http(s) server	
-	skipServer : false,
+	// if false proxy will not start the proxy server after create it
+	skipStart : false,
 
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
 	onrequest : (req, res) => {response(res,403);},
@@ -136,11 +136,21 @@ function proxy(configs) {
 	event.EventEmitter.prototype._maxListeners = 500;
 	event.defaultMaxListeners = 500;
 
-	if(configs.skipServer) return;
+	if(configs.skipStart) return;
 
 	return startServer();
 }
 
+function startServer() {
+
+	server = createServer();
+	bindServer(server);
+	pacProxy.server = server;
+
+	if(pacProxy.configs.websocket) initInnerServer();
+	return server;
+
+}
 
 function bindServer(server) {
 
@@ -164,18 +174,6 @@ function bindServer(server) {
 		);
 	});
 	server.on("error", err=>console.log(err));
-}
-
-
-function startServer() {
-
-	server = createServer();
-	bindServer(server);
-	pacProxy.server = server;
-
-	if(pacProxy.configs.websocket) initInnerServer();
-	return server;
-
 }
 
 function generateBasicAuth(user, password) {
@@ -311,8 +309,10 @@ function log(...args) {
 	if (pacProxy.configs && pacProxy.configs.logging) console.log(...args);
 }
 
-function pacContent(userAgent, vbrowser) {
+function pacContent(req, vbrowser) {
+	let userAgent = req.headers['user-agent'];
 	log('%s PAC %s ', vbrowser, userAgent);
+	if(!req.headers["host"]){ return pacDirect;}
 	if(vbrowser){
 		let mbrowser = vbrowser.trim().toLowerCase();
 		if(mbrowser in normalBrowser){
@@ -327,9 +327,11 @@ function pacContent(userAgent, vbrowser) {
 		}
 	}
 
-	let proxyType = pacProxy.configs.https ? 'HTTPS' : 'PROXY' ;
-	let vdomain = pacProxy.configs.domain=='localhost' ? '127.0.0.1' : pacProxy.configs.domain ;
-	let pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${vdomain}:${pacProxy.configs.proxyport}";}`;
+	let vhttps = pacProxy.configs.https;
+	let [vdomain, vport] = req.headers["host"].split(':');
+	if(!vport){ vport = vhttps? 443 : 80}
+	let proxyType = vhttps ? 'HTTPS' : 'PROXY' ;
+	let pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${vdomain}:${vport}";}`;
 	return pacjs;
 }
 
@@ -486,7 +488,7 @@ function handleWebsite(req, res, tunnelRequest=false) {
 		}
 
 		if ((!pacProxy.configs.behindTunnel) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
-			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.paclink.length+1));
+			let vpac = pacContent(req, req.url.slice(pacProxy.configs.paclink.length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
 			if(!tunnelRequest) pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
 
@@ -499,7 +501,7 @@ function handleWebsite(req, res, tunnelRequest=false) {
 		}
 
 		if ((pacProxy.configs.pacpass.length==3) && req.url.startsWith(pacProxy.configs.pacpass[0])) {
-			let vpac = pacContent(req.headers['user-agent'], req.url.slice(pacProxy.configs.pacpass[0].length+1));
+			let vpac = pacContent(req, req.url.slice(pacProxy.configs.pacpass[0].length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
 
 			if(!pacProxy.configs.behindTunnel) pacProxy.proxyUsers.set(visitorIP,[Date.now()+120000, req.headers['user-agent']]);
@@ -557,7 +559,7 @@ function _handleRequest(req, res) {
 	visitorIP = req.socket.remoteAddress;	
 	log('%s %s %s ', visitorIP, req.method, req.url);
 	if((visitorIP=='127.0.0.1') && req.headers.host.startsWith('localhost') && req.url.startsWith('/pac')) {
-		let vpac = pacContent(req.headers['user-agent'], req.url.slice(5));
+		let vpac = pacContent(req, req.url.slice(5));
 		if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
 		return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
