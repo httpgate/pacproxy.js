@@ -16,7 +16,7 @@ libportable是一个开源的工具，可以将原版firefox制作成绿色软�
 
 * 运行"core"文件夹下的"injectpe.bat"文件，按两次回车后，绿色firefox就做好了
 
-* 打开core目录，运行firefox.exe, 在地址栏输入about:support，检查[配置文件夹](firefoxinformation.png)是否在新创建的firefox目录内。如果在就代表制作成功。
+* 打开core目录，运行firefox.exe, 在地址栏输入about:support，检查[配置文件夹](firefoxInformation.png)是否在新创建的firefox目录内。如果在就代表制作成功。
 
 * 在U盘根目录创建firefox.bat快捷文件，内容为start “firefox" ./firefox/firefox.exe
 
