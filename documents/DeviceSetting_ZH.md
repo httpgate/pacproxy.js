@@ -31,7 +31,7 @@
 * 服务器IP如果封锁了也可随时更换，所以IP被封短时上不了网不要紧，通知服务器管理人员更换IP，先保存当前域名和PAC链接.
  
 
-## 全局代理，仅限国外品牌的原装手机/平板：
+## 手机全局代理，仅限国外品牌的原装手机/平板：
 
 * Android安卓系统，长按wifi连接，双击家里的wifi名，点屏幕右上角编辑图标，选(Advanced Setting)高级设置->代理(Proxy)->选自动设置(Auto-config)->输入PAC网络地址(PAC Web Address)： https://PACURL ->点(Save)保存,  如果仅firefox翻墙, 则输入: https://PACURL/firefox (不适用于firefox Nightly版本)
 
@@ -42,7 +42,7 @@
 * 设置全局pacproxy的话，其他软件就也能上网，设备上尽量不要安装任何国产软件
 
 
-## 全局代理，仅限干净原装WINDOWS专用系统：
+## Windows全局代理，仅限干净原装WINDOWS专用系统：
 
 * WINDOWS 10/11, 开始菜单->设置(Settings)->搜索：代理(Proxy)->勾选上(Use Setup Script)使用设置脚本->输入(Script Address)脚本地址：https://PACURL->点(Save)保存， 如果仅firefox翻墙, 则输入: https://PACURL/firefox
 
@@ -51,7 +51,7 @@
 
 ## 其他设备
 
-* 推荐使用U盘安装u盘启动的chromeos系统或linux系统，设置方式类似。U盘推荐用SAMSUNG FIT PLUS
+* 可使用U盘安装u盘启动的chromeos系统或linux系统，设置方式类似。U盘推荐用SAMSUNG FIT PLUS
 
 * 在虚拟主机里安装Linux或Windows都可以安装Firefox上网
 
