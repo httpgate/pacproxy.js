@@ -54,7 +54,7 @@ node runproxy.js [网站配置文件] [监听端口号]
 
 推荐用pm2：
 
-pm2 start default.config.js
+sudo pm2 start ./runproxy.js -- ./example.site.domain/production.cfg 
 
 也可以用nohup:
 
