@@ -58,7 +58,7 @@ sudo pm2 start ./runproxy.js -- ./example.site.domain/production.cfg
 
 也可以用nohup:
 
-nohup ./runproxy.js ./example.site.domain/production.cfg &
+nohup sudo ./runproxy.js ./example.site.domain/production.cfg &
 
 ## 3. 在手机上运行
 
