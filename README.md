@@ -1,6 +1,5 @@
 # pacproxy加密代理服务器
 
-[English Readme:](\/documents\/README_EN\.md)
 * 普通proxy代理服务器有明显的特征，容易被识别和封锁。pacproxy可伪装成普通网站，难于识别和封锁。
 * 普通代理服务会泄露访问的网站和http内容，pacproxy使用https加密流量，达到安全隐身的效果。
 * pacproxy更安全，比vpn速度快占用资源少，很适合在配置低的设备上运行。
@@ -29,12 +28,14 @@
 * 搭建pacproxy服务器需要[申请一个域名](\/documents\/About_Domain_ZH.md)
 
 
-## VPS服务器部署
+## 1. 在VPS服务器运行（推荐）
 
 参见 [pacproxy服务器](https://github.com/httpgate/pacproxy-server)
 
 
-## 直接部署
+## 2. 直接运行
+
+一般直接运行一个不加密的pacproxy服务，再用nginx或LiteSpeed Web Server反向代理成加密服务, 支持[websocket代理](https://github.com/httpgate/wssproxy-agent)
 
 ### 设置
 
@@ -42,9 +43,9 @@
 
 ### 运行
 
-node pacproxy.js [网站配置文件] [监听端口号]
+node runproxy.js [网站配置文件] [监听端口号]
 
-如：node pacproxy.js ./example.site.domain/production.cfg 3129
+如：node runproxy.js ./example.site.domain/production.cfg 3129
 
 其中[网站配置文件] [监听端口号] 均为可选参数
 
@@ -57,10 +58,9 @@ pm2 start default.config.js
 
 也可以用nohup:
 
-nohup ./pacproxy.js ./example.site.domain/production.cfg &
+nohup ./runproxy.js ./example.site.domain/production.cfg &
 
-
-## 手机部署
+## 3. 在手机上运行
 
 参见 [pacproxy迷你服务器](https://github.com/httpgate/pacproxy-miniserver)
 

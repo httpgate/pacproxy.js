@@ -1,1 +1,0 @@
-nohup ./pacproxy.js ./example.site.domain/production.cfg &

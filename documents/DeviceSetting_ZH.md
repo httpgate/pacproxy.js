@@ -14,6 +14,8 @@
 
 * 为避免连不上代理时浏览敏感网站流量走本地网络，桌面和移动版firefox都需要在地址栏中输入about:config，在出现的搜索框中，键入proxy点搜索，设置network.proxy.allow_bypass 为 false
 
+* 可用[libportable](https://sourceforge.net/projects/libportable/files/Tools/portable_bin.7z/download) 制作绿色版firefox，保存在U盘里，按上述方法设置好后，分享给亲朋好友
+
 ## 注意事项
 
 * 设置完后先访问www.google.com或其它非敏感被封网站测试是否能正常翻墙，确认能翻墙后才访问敏感站点。访问国内网站请不要用翻墙代理.
