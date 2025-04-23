@@ -235,9 +235,6 @@ function gErrorHandler(e) {
  * Start Server if configured
  */
 
-// uncomment to run
-if(process.argv[1].includes(__filename)) run();
-
 function run() {
     var configs = getConfigs();
 	proxy(configs);
