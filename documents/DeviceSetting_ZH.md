@@ -35,7 +35,7 @@
 
 * Android安卓系统，长按wifi连接，双击家里的wifi名，点屏幕右上角编辑图标，选(Advanced Setting)高级设置->代理(Proxy)->选自动设置(Auto-config)->输入PAC网络地址(PAC Web Address)： https://PACURL ->点(Save)保存,  如果仅firefox翻墙, 则输入: https://PACURL/firefox (不适用于firefox Nightly版本)
 
-* 主流浏览器都支持pacproxy。但很多非浏览器app不支持pacproxy的https加密协议，可以用 [Stunnel](https://play.google.com/store/apps/details?id=link.infra.sslsockspro) 将pacproxy转为普通的内网proxy, 同时将https://PACURL 替换为相应的内网 http://pacurl , 详情可参考[参考示例](https://github.com/httpgate/resources/blob/main/README.md)
+* 主流浏览器都支持pacproxy。很多非浏览器app不支持pacproxy的https加密协议，推荐用[wssgent](https://github.com/httpgate/wssproxy-agent/tree/main/example)将pacproxy转换成普通代理
 
 * 苹果手机平板, 由于ios Safari不支持https加密代理，其他浏览器在ios上必须用Safari内核，所以暂不支持pacproxy
 
@@ -46,8 +46,7 @@
 
 * WINDOWS 10/11, 开始菜单->设置(Settings)->搜索：代理(Proxy)->勾选上(Use Setup Script)使用设置脚本->输入(Script Address)脚本地址：https://PACURL->点(Save)保存， 如果仅firefox翻墙, 则输入: https://PACURL/firefox
 
-* 如要支持一些非浏览器软件，可以用[Stunnel](https://www.stunnel.org/)或类似软件将pacproxy转为普通的内网proxy, 详情可参考[参考示例](https://github.com/httpgate/resources/blob/main/README.md) 。 推荐用[wssgent](https://github.com/httpgate/wssproxy-agent)实现类似功能。 wssagent支持Windows/Linux/MacOS.
-
+* 如要支持一些非浏览器软件，推荐用[wssgent](https://github.com/httpgate/wssproxy-agent)将pacproxy转换成普通代理。 wssagent支持Windows/Linux/MacOS.
 
 ## 其他设备
 

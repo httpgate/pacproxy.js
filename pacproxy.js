@@ -454,22 +454,6 @@ function requestRemote(parsed, req, res) {
 	else proxyReq.end();	
 }
 
-
-/**
- * check if request is from stunnel (or similar ssl tunnel)
- */
-function fromStunnel(host) {
-	if(!pacProxy.configs.https) return false;
-	if(!pacProxy.configs.domain=="localhost") return false;
-	if(!host) return false;
-	if(!host.split(':')[1]) return false;
-	if(host.split(':')[1] == pacProxy.configs.port) return false;
-	if(host.startsWith('127.0.0.1') || host.startsWith('localhost')){
-		return true;
-	} else return false;
-}
-
-
 /**
  * handle website requests
  */
@@ -484,16 +468,10 @@ function handleWebsite(req, res, tunnelRequest=false) {
 			return  response(res, 403);
 		}
 
-		if ((!pacProxy.configs.behindTunnel) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
+		if ((!tunnelRequest) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 			let vpac = pacContent(req, req.url.slice(pacProxy.configs.paclink.length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
-			if(!tunnelRequest) pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
-
-			if(fromStunnel(parsed.host)){
-				let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
-				return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
-			}
-
+			pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
 			return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		}
 
@@ -501,14 +479,9 @@ function handleWebsite(req, res, tunnelRequest=false) {
 			let vpac = pacContent(req, req.url.slice(pacProxy.configs.pacpass[0].length+1));
 			if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
 
-			if(!pacProxy.configs.behindTunnel) pacProxy.proxyUsers.set(visitorIP,[Date.now()+120000, req.headers['user-agent']]);
-			if(tunnelRequest && req.headers['user-agent']) pacProxy.proxyAgents.set(req.headers['user-agent'], Date.now()+120000);
+			if(!tunnelRequest) pacProxy.proxyUsers.set(visitorIP,[Date.now()+120000, req.headers['user-agent']]);
+			else if(req.headers['user-agent']) pacProxy.proxyAgents.set(req.headers['user-agent'], Date.now()+120000);
 
-			if(fromStunnel(parsed.host)){
-				let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
-				return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
-			}
-			
 			return response(res,200,{'Content-Type': 'text/plain'},vpac);
 		}
 
