@@ -1,3 +1,5 @@
+'use strict'
+
 //sample configs, also the default configs, change it to your settings
 const configsInCode = {
 	// set to false to save storage and avoid problems
@@ -56,7 +58,7 @@ const configsInCode = {
 	// ssl key file, if empty it will be: {certdir}/{domain}/privkey.pem
 	key : '',
 
-	// ssl cert dir, if empty it will be env argument or current path
+	// default ssl cert dir, if empty it will be env argument or current path
 	certdir : ''
 };
 
