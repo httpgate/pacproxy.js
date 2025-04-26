@@ -69,7 +69,6 @@ const configsInCode = {
 const http = require('http');
 const https = require('https');
 const net = require('net');
-const event = require('events');
 const fs = require('fs');
 
 /**
@@ -147,7 +146,6 @@ function startServer() {
 }
 
 function bindServer(server) {
-
 	if(pacProxy.configs.behindTunnel){
 		server.on('connect', handleConnectBehindTunnel);
 		server.on('request', handleRequestBehindTunnel);
@@ -200,11 +198,10 @@ function initInnerServer() {
 		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss+pac url:  \r\n%s\r\n',
 		pacProxy.configs.pacport, getShareLink('ws')+'/pac');
 	});
-
 }
 
 function run() {
-    var configs = getConfigs();
+	var configs = getConfigs();
 	proxy(configs);
 }
 
@@ -392,15 +389,14 @@ function response(res, httpCode, headers, content) {
 function socketResponse(socket, content, cb) {
 	if(socket.destroyed) return;
 	if(!cb) cb = () => socket.end();
-    try {
-        socket.write(content+ '\r\n', 'UTF-8', cb);
-    } catch (error) {
-        cb(error);
-    }
+	try {
+		socket.write(content+ '\r\n', 'UTF-8', cb);
+	} catch (error) {
+			cb(error);
+	}
 }
 
 function requestRemote(parsed, req, res) {
-
 	log('%s Fetch %s ', visitorIP, parsed.toString());
 	let agent = http;
 	if(parsed.protocol == 'https:') agent = https;
