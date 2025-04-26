@@ -1,6 +1,6 @@
-# 制作FirefoxU盘
+# 制作 Firefox U盘
 
-libportable是一个开源的工具，可以将原版firefox制作成绿色软件，firefox的所有配置信息都在同一个文件夹里，可以做成U盘随身携带或送人。
+libportable是一个[开源](https://github.com/adonais/libportable)的工具，可以将原版firefox制作成绿色软件，firefox的所有配置信息都在同一个文件夹里，可以做成U盘随身携带或送人。
 
 * 准备一个U盘，新建文件夹 firefox
 
@@ -18,6 +18,6 @@ libportable是一个开源的工具，可以将原版firefox制作成绿色软�
 
 * 打开core目录，运行firefox.exe, 在地址栏输入about:support，检查[配置文件夹](firefoxInformation.png)是否在新创建的firefox目录内。如果在就代表制作成功。
 
-* 在U盘根目录创建firefox.bat快捷文件，内容为start “firefox" ./firefox/firefox.exe
+* 在U盘根目录创建firefox.bat快捷文件，内容为：start “firefox" ./firefox/firefox.exe
 
-* 双击根目录下firefox.bat即可打开firefox, 做好各项设置后备份一下，即可赠送给亲朋好友
+* 双击根目录下firefox.bat即可打开firefox, 做好[各项安全设置](DeviceSetting_ZH.md)后备份一下，即可赠送给亲朋好友

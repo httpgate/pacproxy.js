@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 //sample configs, also the default configs, change it to your settings
 const configsInCode = {
 	// set to false to save storage and avoid problems
@@ -43,7 +41,7 @@ const configsInCode = {
 	// need to "npm install ws", it will create a inner proxy server to handle websocket traffic	
 	websocket : false,
 
-	// if false proxy will not start the proxy server after create it
+	// if false proxy will start the proxy server later
 	skipStart : false,
 
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
@@ -52,15 +50,16 @@ const configsInCode = {
 	// websocket handler for not proxy traffic, enable if websocket enabled
 	onconnection : (ws, req) => { ws.close(1011, "authentication failed");},
 
-	// ssl cert dir
-	certdir : '',
-
-	// ssl cert file, default is {certdir}/{domain}/fullchain.pem
+	// ssl cert file, if empty it will be: {certdir}/{domain}/fullchain.pem
 	cert : '',
 
-	// ssl key file, default is {certdir}/{domain}/privkey.pem
-	key : ''
+	// ssl key file, if empty it will be: {certdir}/{domain}/privkey.pem
+	key : '',
+
+	// ssl cert dir, if empty it will be env argument or current path
+	certdir : ''
 };
+
 
 /**
  * Dependencies
@@ -71,29 +70,12 @@ const net = require('net');
 const event = require('events');
 const fs = require('fs');
 
-global.Buffer = global.Buffer || require('buffer').Buffer;
-
-if (typeof btoa === 'undefined') {
-  global.btoa = function (str) {
-    return Buffer.from(str, 'binary').toString('base64');
-  };
-}
-
-if (typeof atob === 'undefined') {
-  global.atob = function (b64Encoded) {
-    return Buffer.from(b64Encoded, 'base64').toString('binary');
-  };
-}
-/**
- * Constants
- */
-const iosBrowser = { 'firefox' : ' FxiOS', 'chrome' : ' CriOS', 'edge' : ' EdgiOS' } ;
-const normalBrowser = { 'firefox' : ' Firefox', 'chrome' : ' Chrome', 'edge' : ' Edg', 'opera' : ' OPR' } ;
-const pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
-
 /**
  * Shared Variables
  */
+const normalBrowser = { 'firefox' : ' Firefox', 'chrome' : ' Chrome', 'edge' : ' Edg', 'opera' : ' OPR' } ;
+const pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
+
 this.configs = false;
 this.server = false;
 this.httpAgents = new Map();
@@ -109,16 +91,31 @@ this.proxyAuth = false;
 this.WebSocket = false;
 const pacProxy = this;
 
+global.Buffer = global.Buffer || require('buffer').Buffer;
+if (typeof btoa === 'undefined') {
+	global.btoa = function (str) {
+		return Buffer.from(str, 'binary').toString('base64');
+	};
+}
+
+if (typeof atob === 'undefined') {
+	global.atob = function (b64Encoded) {
+		return Buffer.from(b64Encoded, 'base64').toString('binary');
+	};
+}
+
 /**
  * Export Module functions
  */
 exports.proxy = proxy;
-exports.handleRequest = handleRequest;    //use it like: server.on('request', pacproxy.handlerRequest)
-exports.handleRequestBehindTunnel = handleRequestBehindTunnel;    //use it like: server.on('request', pacproxy.handleRequestBehindTunnel)
 exports.merge = merge;
 exports.run = run;
 exports.startServer = startServer;
 
+
+/**
+ * Init and start proxy
+ */
 function proxy(configs) {
 	if(!configs) configs = configsInCode;
 	else merge(configs, configsInCode);
@@ -133,23 +130,18 @@ function proxy(configs) {
 
 	if(pacProxy.configs.pacpass.length==3) pacProxy.proxyAuth = generateBasicAuth(pacProxy.configs.pacpass[1],pacProxy.configs.pacpass[2]);
 
-	event.EventEmitter.prototype._maxListeners = 500;
-	event.defaultMaxListeners = 500;
-
 	if(configs.skipStart) return;
 
 	return startServer();
 }
 
 function startServer() {
-
 	server = createServer();
 	bindServer(server);
 	pacProxy.server = server;
 
 	if(pacProxy.configs.websocket) initInnerServer();
 	return server;
-
 }
 
 function bindServer(server) {
@@ -162,10 +154,8 @@ function bindServer(server) {
 		server.on('request', handleRequest);
 	}
 	server.listen(pacProxy.configs.port, pacProxy.configs.proxyip, () => {
-		console.log(
-			'\r\npac proxy server listening on port %d,\r\nshare your pac url:  \r\n%s',
-			server.address().port, getShareLink('http')
-		);
+		console.log('\r\npac proxy server listening on port %d,',server.address().port);
+		if(!pacProxy.configs.behindTunnel)	console.log('\r\nshare your pac url: \r\n%s', getShareLink('http'));
 
 		if(pacProxy.configs.pacpass.length!==3) return;
 		console.log(
@@ -174,23 +164,6 @@ function bindServer(server) {
 		);
 	});
 	server.on("error", err=>console.log(err));
-}
-
-function generateBasicAuth(user, password) {
-    var token = user + ":" + password;
-    var hash = btoa(token); 
-    return "Basic " + hash;
-}
-
-function newAgent(ssl = false) {
-	if(ssl) return new https.Agent({keepAlive: true, timeout: 300000, maxCachedSessions: 200 });
-	else return new http.Agent({ keepAlive: true, timeout: 300000});
-}
-
-function merge(vmain, vdefault){
-	Object.entries(vdefault).forEach((value, key) => {
-		if(!(value[0] in vmain)) vmain[value[0]] = value[1];
-	} ) ;
 }
 
 function initInnerServer() {
@@ -228,20 +201,12 @@ function initInnerServer() {
 
 }
 
-function gErrorHandler(e) {
-	log('General Error %s ',  e.message);
-}
-/**
- * Start Server if configured
- */
-
 function run() {
     var configs = getConfigs();
 	proxy(configs);
 }
 
 function getConfigs(){
-
 	if(!process.argv[2]){ 
 		if(process.env.PORT) configsInCode.port = process.env.PORT;
 		return configsInCode;
@@ -281,6 +246,32 @@ function createServer() {
 	return https.createServer(options);
 }
 
+
+/**
+ * shared functions
+ */
+
+function gErrorHandler(e) {
+	log('General Error %s ',  e.message);
+}
+
+function generateBasicAuth(user, password) {
+	var token = user + ":" + password;
+	var hash = btoa(token); 
+	return "Basic " + hash;
+}
+
+function newAgent(ssl = false) {
+	if(ssl) return new https.Agent({keepAlive: true, timeout: 300000, maxCachedSessions: 200 });
+	else return new http.Agent({ keepAlive: true, timeout: 300000});
+}
+
+function merge(vmain, vdefault){
+	Object.entries(vdefault).forEach((value, key) => {
+		if(!(value[0] in vmain)) vmain[value[0]] = value[1];
+	} ) ;
+}
+
 function getShareLink(protocal, vlink) {
 	let linkDomain = protocal + (pacProxy.configs.https? 's://' : '://') + pacProxy.configs.domain;
 	let linkHost = ':' + pacProxy.configs.proxyport;
@@ -290,9 +281,6 @@ function getShareLink(protocal, vlink) {
 	return linkDomain + linkHost + vlink;
 }
 
-/**
- * Shared Functions
- */
 function filterHeader(reqHeaders){
 	let resHeaders = reqHeaders;
 	if(!reqHeaders) return resHeaders;
@@ -324,10 +312,9 @@ function pacContent(req, vbrowser) {
 		}
 	}
 
-	let vhttps = pacProxy.configs.https;
 	let [vdomain, vport] = req.headers["host"].split(':');
-	if(!vport){ vport = vhttps? 443 : 80}
-	let proxyType = vhttps ? 'HTTPS' : 'PROXY' ;
+	if(!vport){ vport = pacProxy.configs.https? 443 : 80}
+	let proxyType = pacProxy.configs.https ? 'HTTPS' : 'PROXY' ;
 	let pacjs = `function FindProxyForURL(url, host) { return "${proxyType} ${vdomain}:${vport}";}`;
 	return pacjs;
 }
@@ -569,7 +556,7 @@ function _handleRequest(req, res) {
 };
 
 /**
- * handle CONNECT proxy requests.
+ * handle proxy CONNECT requests.
  */
 
 function handleConnect(req, socket) {
@@ -591,7 +578,7 @@ function handleConnectBehindTunnel(req, socket) {
 
 function _handleConnect(req, socket) {
 	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
-    try {
+	try {
 		visitorIP = req.socket.remoteAddress;
 		log('%s %s %s ', visitorIP, req.method, req.url);
 
@@ -607,10 +594,10 @@ function _handleConnect(req, socket) {
 		let vport = req.url.split(':')[1] || 443;
 
 		var ropts = {
-            host: vhost,
-            port: vport,
+			host: vhost,
+			port: vport,
 			keepAlive: true
-        };
+		};
 
 		if(pacProxy.configs.proxyip != '0.0.0.0'){
 			ropts.localAddress = pacProxy.configs.proxyip;
@@ -646,10 +633,14 @@ function _handleConnect(req, socket) {
 		tunnel.on('error', ontunnelerror);
 		tunnel.on('close', () => socket.end());
 		tunnel.setNoDelay(true);
-    } catch (e) {
+	} catch (e) {
 		log('%s Error %s ', visitorIP, e.message);
-    }
+	}
 }
+
+/**
+ * handle proxy websocket requests.
+ */
 
 function handleWebsocket(ws, req) {
 	if(!req.url.startsWith( pacProxy.configs.paclink)) return pacProxy.configs.onconnection(ws,req);
