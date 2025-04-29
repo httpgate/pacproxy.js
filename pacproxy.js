@@ -403,7 +403,7 @@ function socketResponse(socket, content, cb) {
 	try {
 		socket.write(content+ '\r\n', 'UTF-8', cb);
 	} catch (error) {
-			cb(error);
+		cb(error);
 	}
 }
 
