@@ -52,15 +52,15 @@ node runproxy.js [网站配置文件] [监听端口号]
 
 ### 后台运行
 
-推荐用pm2：
+* 推荐用pm2：
 
 sudo pm2 start ./runproxy.js -- ./example.site.domain/production.cfg 
 
-也可以用nohup:
+* 也可以用nohup:
 
 nohup sudo ./runproxy.js ./example.site.domain/production.cfg &
 
-推荐用pm2[直接运行pacproxy-js的npm库](https://github.com/httpgate/resouces/tree/main/pm2_Run_Npm_Package.md)
+* 推荐用pm2[直接运行pacproxy-js的npm库](https://github.com/httpgate/resouces/tree/main/pm2_Run_Npm_Package.md)
 
 ## 3. 在手机上运行
 

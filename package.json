@@ -1,6 +1,6 @@
 {
   "name": "pacproxy-js",
-  "version": "1.5.8",
+  "version": "1.5.9",
   "description": "A https proxy server which supports websocket and CDN. 支持websocket和CDN中转的加密代理服务器",
   "main": "pacproxy.js",
   "bin": "runproxy.js",

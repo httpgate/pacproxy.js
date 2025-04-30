@@ -400,11 +400,7 @@ function response(res, httpCode, headers, content) {
 function socketResponse(socket, content, cb) {
 	if(socket.destroyed) return;
 	if(!cb) cb = () => socket.end();
-	try {
-		socket.write(content+ '\r\n', 'UTF-8', cb);
-	} catch (error) {
-		cb(error);
-	}
+	socket.write(content+ '\r\n', 'UTF-8', cb);
 }
 
 function requestRemote(parsed, req, res) {
@@ -417,17 +413,17 @@ function requestRemote(parsed, req, res) {
 		parsed.localAddress = pacProxy.configs.proxyip;
 	}
 
-	req.on('error', ()=>req.socket.end());
-	res.on('error', ()=>req.socket.end());
+	let endRequest = ()=>{
+		proxyReq.end();
+        res.removeListener('finish', endRequest);
+		req.socket.removeListener('close', endRequest);		
+	}
+	req.socket.on('close', ()=>endRequest());
+	res.on('finish', ()=>endRequest());
 
 	var gotResponse = false;
 	var proxyReq = agent.request(parsed, function(proxyRes) {
 		if(isLocalIP(proxyRes.socket.remoteAddress)) return response(res,403);
-
-		res.on('error', ()=>proxyRes.socket.end());
-		proxyRes.on('error', ()=>req.socket.end());
-
-		if (gotResponse) return;
 		gotResponse = true;
 		let headers = filterHeader(proxyRes.headers);
 		let statusCode = proxyRes.statusCode ? proxyRes.statusCode : 200;
@@ -635,13 +631,15 @@ function _handleConnect(req, socket) {
 		tunnel.on('lookup',(err, addresss) => {
 			if(isLocalIP(addresss)){
 				log('%s Error %s ', visitorIP, 'visit localIP');
+				gotResponse = true;
 				tunnel.end();
 				socket.end();
 			}
 		});
 
 		tunnel.on('error', ontunnelerror);
-		tunnel.on('close', () => socket.end());
+		tunnel.on('end', () => socket.end());
+		socket.on('end', () => tunnel.end())
 		tunnel.setNoDelay(true);
 	} catch (e) {
 		log('%s Error %s ', visitorIP, e.message);
