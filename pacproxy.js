@@ -415,7 +415,7 @@ function requestRemote(parsed, req, res) {
 
 	let endRequest = ()=>{
 		proxyReq.end();
-        res.removeListener('finish', endRequest);
+		res.removeListener('finish', endRequest);
 		req.socket.removeListener('close', endRequest);		
 	}
 	req.socket.on('close', ()=>endRequest());
