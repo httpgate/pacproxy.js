@@ -413,14 +413,6 @@ function requestRemote(parsed, req, res) {
 		parsed.localAddress = pacProxy.configs.proxyip;
 	}
 
-	let endRequest = ()=>{
-		proxyReq.end();
-		res.removeListener('finish', endRequest);
-		req.socket.removeListener('close', endRequest);		
-	}
-	req.socket.on('close', ()=>endRequest());
-	res.on('finish', ()=>endRequest());
-
 	var gotResponse = false;
 	var proxyReq = agent.request(parsed, function(proxyRes) {
 		if(isLocalIP(proxyRes.socket.remoteAddress)) return response(res,403);
@@ -440,7 +432,15 @@ function requestRemote(parsed, req, res) {
 		req.socket.end();
 	});
 
-	req.on('end', ()=>proxyReq.end());
+
+	let endRequest = ()=>{
+		proxyReq.end();
+		res.removeListener('finish', endRequest);
+		req.removeListener('end', endRequest);		
+	}
+	res.on('finish', ()=>endRequest());
+	req.on('end', ()=>endRequest());
+	
 	if(!req.writableEnded) req.pipe(proxyReq);
 	else proxyReq.end();	
 }
