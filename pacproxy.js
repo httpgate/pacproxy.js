@@ -40,8 +40,8 @@ const configsInCode = {
 	// content of https://www.proxy.domain, style is: https://blog.ddns.com/homepage.htm. no local site for safety reason
 	website :  '',
 
-	// avoid hacker DDOS attack cause proxy IP blocked by major CDN, format is:['username', 'password'], browser will prompt to input username/password
-	website_auth :  '',  //['webuser','webpass'],
+	// avoid hacker DDOS attack cause proxy IP blocked by major CDN, format is:['account_name', 'username', 'password'], browser will prompt to input username/password， and save to browser ’account_name' account
+	website_auth :  '',  //['Protected‘，'webuser','webpass'],
 
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
 	onrequest : (req, res) => {response(res,403);},
@@ -144,7 +144,7 @@ function proxy(configs) {
 
 	if(pacProxy.configs.pacpass && pacProxy.configs.pacpass.length==3) pacProxy.proxyAuth = generateBasicAuth(pacProxy.configs.pacpass[1],pacProxy.configs.pacpass[2]);
 
-	if(pacProxy.configs.website_auth && pacProxy.configs.website_auth.length==2) pacProxy.websiteAuth = generateBasicAuth(pacProxy.configs.website_auth[0],pacProxy.configs.website_auth[1]);
+	if(pacProxy.configs.website_auth && pacProxy.configs.website_auth.length==3) pacProxy.websiteAuth = generateBasicAuth(pacProxy.configs.website_auth[1],pacProxy.configs.website_auth[2]);
 
 	if(configs.skipStart) return;
 
@@ -394,7 +394,7 @@ function basicAuthentication(request) {
 
 function websiteAuthentication(request) {
 	if(!pacProxy.configs.website_auth) return true;
-	if(pacProxy.configs.website_auth.length!==2) return false;
+	if(pacProxy.configs.website_auth.length!==3) return false;
 	if(!pacProxy.websiteAuth) return false;
 	let Authorization = request.headers['authorization'];
 	if(!Authorization) return false;
@@ -493,7 +493,7 @@ function handleWebsite(req, res, tunnelRequest=false) {
 			return response(res,200,pacHeaders,vpac);
 		}
 
-		if(!websiteAuthentication(req)) return response(res,401,{'WWW-Authenticate': 'Basic realm="my scope", charset="UTF-8"'});
+		if(!websiteAuthentication(req)) return response(res,401,{'WWW-Authenticate': 'Basic realm="' + pacProxy.configs.website_auth[0] + '"'});
 
 		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
 
