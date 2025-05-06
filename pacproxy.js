@@ -41,7 +41,7 @@ const configsInCode = {
 	website :  '',
 
 	// avoid hacker DDOS attack cause proxy IP blocked by major CDN, format is:['account_name', 'username', 'password'], browser will prompt to input username/password， and save to browser ’account_name' account
-	website_auth :  '',  //['Protected‘，'webuser','webpass'],
+	website_auth :  '',  //['Protected','webuser','webpass'],
 
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
 	onrequest : (req, res) => {response(res,403);},
