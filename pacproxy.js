@@ -40,7 +40,7 @@ const configsInCode = {
 	// content of https://www.proxy.domain, style is: https://blog.ddns.com/homepage.htm. no local site for safety reason
 	website :  '',
 
-	// avoid hacker DDOS attack cause proxy IP blocked by major CDN, format is:['username', 'password'], browser will prompt hint to input username/password
+	// avoid hacker DDOS attack cause proxy IP blocked by major CDN, format is:['username', 'password'], browser will prompt to input username/password
 	website_auth :  '',  //['webuser','webpass'],
 
 	// web request handler for not proxy traffic, enable if website value is empty, by default return 403 error
@@ -457,7 +457,7 @@ function requestRemote(parsed, req, res) {
 	req.on('end', ()=>endRequest());
 	
 	if(!req.writableEnded) req.pipe(proxyReq);
-	else proxyReq.end();	
+	else endRequest();	
 }
 
 /**
@@ -493,9 +493,9 @@ function handleWebsite(req, res, tunnelRequest=false) {
 			return response(res,200,pacHeaders,vpac);
 		}
 
-		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
-
 		if(!websiteAuthentication(req)) return response(res,401,{'WWW-Authenticate': 'Basic realm="my scope", charset="UTF-8"'});
+
+		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
 
 		var headers = filterHeader(req.headers);
 		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
