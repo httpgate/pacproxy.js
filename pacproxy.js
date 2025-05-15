@@ -346,7 +346,7 @@ function isLocalIP(address) {
 	address = address.toLowerCase();
 	if(address.startsWith('::ffff:')) address = address.slice(7);
 	if(address.startsWith('::') || address.startsWith('0')) return true;
-	if(address.startsWith('fc') || address.startsWith('fe')) return true;
+	if(address.startsWith('fc') || address.startsWith('fd') || address.startsWith('fe')) return true;
 	if(address.startsWith('192.168.') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254.') || address.startsWith('172.16')) return true;
 	return false;
 }
