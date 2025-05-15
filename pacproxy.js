@@ -336,14 +336,15 @@ function pacContent(req, vbrowser) {
 
 function isLocalHost(host) {
 	if(!host) return true;
-	let domain = (host.split(':')[0]).trim();
+	const domain = (host.split(':')[0]).trim().toLowerCase();
 	if(domain.includes('localhost') || domain.includes('.local')) return true;
 	return isLocalIP(domain);
 }
 
 function isLocalIP(address) {
 	if(!address) return true;
-	if(address.startsWith('::ffff:') || address.startsWith('::FFFF:')) address = address.slice(7);
+	address = address.toLowerCase();
+	if(address.startsWith('::ffff:')) address = address.slice(7);
 	if(address.startsWith('::') || address.startsWith('0')) return true;
 	if(address.startsWith('fc') || address.startsWith('fe')) return true;
 	if(address.startsWith('192.168.') || address.startsWith('10.') || address.startsWith('127.') || address.startsWith('169.254.') || address.startsWith('172.16')) return true;
@@ -353,9 +354,9 @@ function isLocalIP(address) {
 function authenticateIP(req) {
 	if(basicAuthentication(req)) return true;
 
-	var checkIP = req.socket.remoteAddress;
+	const checkIP = req.socket.remoteAddress;
 	if(pacProxy.proxyUsers.has(checkIP)){
-		let [pacPassTime, userAgent] = pacProxy.proxyUsers.get(checkIP);
+		const [pacPassTime, userAgent] = pacProxy.proxyUsers.get(checkIP);
 		if(Date.now()>pacPassTime) pacProxy.proxyUsers.delete(checkIP);
 		else if(req.headers['user-agent']==userAgent) return 407
 	}
@@ -373,9 +374,9 @@ function authenticateIP(req) {
 
 function authenticateNoIP(req) {
 	if(basicAuthentication(req)) return true;
-	var userAgent = req.headers['user-agent'];
+	const userAgent = req.headers['user-agent'];
 	if(pacProxy.proxyAgents.has(userAgent)){
-		let pacPassTime = pacProxy.proxyAgents.get(userAgent);
+		const pacPassTime = pacProxy.proxyAgents.get(userAgent);
 		if(Date.now()>pacPassTime) pacProxy.proxyAgents.delete(userAgent);
 		else return 407;
 	}
@@ -385,7 +386,7 @@ function authenticateNoIP(req) {
 function basicAuthentication(request) {
 	if(pacProxy.configs.pacpass.length!==3) return false;
 	if(!pacProxy.proxyAuth) return false;
-	let Authorization = request.headers['proxy-authorization'];
+	const Authorization = request.headers['proxy-authorization'];
 	if(!Authorization) return false;
 	if (pacProxy.proxyAuth==Authorization) return true;
 
@@ -396,7 +397,7 @@ function websiteAuthentication(request) {
 	if(!pacProxy.configs.website_auth) return true;
 	if(pacProxy.configs.website_auth.length!==3) return false;
 	if(!pacProxy.websiteAuth) return false;
-	let Authorization = request.headers['authorization'];
+	const Authorization = request.headers['authorization'];
 	if(!Authorization) return false;
 	if (pacProxy.websiteAuth==Authorization) return true;
 	return false;
@@ -419,7 +420,7 @@ function socketResponse(socket, content, cb) {
 }
 
 function requestRemote(parsed, req, res) {
-	var visitorIP = req.socket.remoteAddress;
+	const visitorIP = req.socket.remoteAddress;
 	log('%s Fetch %s ', visitorIP, parsed.toString());
 	let agent = http;
 	if(parsed.protocol == 'https:') agent = https;
@@ -448,7 +449,7 @@ function requestRemote(parsed, req, res) {
 	});
 
 
-	let endRequest = ()=>{
+	const endRequest = ()=>{
 		proxyReq.end();
 		res.removeListener('finish', endRequest);
 		req.removeListener('end', endRequest);		
@@ -464,51 +465,50 @@ function requestRemote(parsed, req, res) {
  * handle website requests
  */
 function handleWebsite(req, res, tunnelRequest=false) {
-	var visitorIP = req.socket.remoteAddress;
-    try {
-		log('%s %s %s ', visitorIP, req.headers.host, req.url);
+	const visitorIP = req.socket.remoteAddress;
+	log('%s %s %s ', visitorIP, req.headers.host, req.url);
 
-		try{
-			var parsed = new URL('https://'+pacProxy.configs.domain + req.url);
-		} catch (e) {
-			return  response(res, 403);
-		}
+	try{
+		var parsed = new URL('https://'+pacProxy.configs.domain + req.url);
+	} catch (e) {
+		return  response(res, 403);
+	}
 
-		var pacHeaders = {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store'};
+	const pacHeaders = {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store'};
 
-		if ((!tunnelRequest) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
-			let vpac = pacContent(req, req.url.slice(pacProxy.configs.paclink.length+1));
-			if(vpac==pacDirect) return response(res,200,pacHeaders,vpac);
-			pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
-			return response(res,200,pacHeaders,vpac);
-		}
+	if ((!tunnelRequest) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
+		const vpac = pacContent(req, req.url.slice(pacProxy.configs.paclink.length+1));
+		if(vpac==pacDirect) return response(res,200,pacHeaders,vpac);
+		pacProxy.proxyClients.set(visitorIP,Date.now()+pacProxy.ipMilliSeconds)
+		return response(res,200,pacHeaders,vpac);
+	}
 
-		if ((pacProxy.configs.pacpass.length==3) && req.url.startsWith(pacProxy.configs.pacpass[0])) {
-			let vpac = pacContent(req, req.url.slice(pacProxy.configs.pacpass[0].length+1));
-			if(vpac==pacDirect) return response(res,200,pacHeaders,vpac);
+	if ((pacProxy.configs.pacpass.length==3) && req.url.startsWith(pacProxy.configs.pacpass[0])) {
+		const vpac = pacContent(req, req.url.slice(pacProxy.configs.pacpass[0].length+1));
+		if(vpac==pacDirect) return response(res,200,pacHeaders,vpac);
 
-			if(!tunnelRequest) pacProxy.proxyUsers.set(visitorIP,[Date.now()+120000, req.headers['user-agent']]);
-			else if(req.headers['user-agent']) pacProxy.proxyAgents.set(req.headers['user-agent'], Date.now()+120000);
+		if(!tunnelRequest) pacProxy.proxyUsers.set(visitorIP,[Date.now()+120000, req.headers['user-agent']]);
+		else if(req.headers['user-agent']) pacProxy.proxyAgents.set(req.headers['user-agent'], Date.now()+120000);
 
-			return response(res,200,pacHeaders,vpac);
-		}
+		return response(res,200,pacHeaders,vpac);
+	}
 
-		if(!websiteAuthentication(req)) return response(res,401,{'WWW-Authenticate': 'Basic realm="' + pacProxy.configs.website_auth[0] + '"'});
+	if(!websiteAuthentication(req)) return response(res,401,{'WWW-Authenticate': 'Basic realm="' + pacProxy.configs.website_auth[0] + '"'});
 
-		if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
+	if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
 
-		var headers = filterHeader(req.headers);
-		if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
-		parsed.protocol = pacProxy.websiteParsed.protocol;
-		parsed.host = pacProxy.websiteParsed.host;
-		headers.host = pacProxy.websiteParsed.host;
-		parsed.port = pacProxy.websiteParsed.port;
-		parsed.method = req.method;
-		parsed.headers = headers;
-		parsed.agent = pacProxy.websiteAgent;
+	const headers = filterHeader(req.headers);
+	if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
+	parsed.protocol = pacProxy.websiteParsed.protocol;
+	parsed.host = pacProxy.websiteParsed.host;
+	headers.host = pacProxy.websiteParsed.host;
+	parsed.port = pacProxy.websiteParsed.port;
+	parsed.method = req.method;
+	parsed.headers = headers;
+	parsed.agent = pacProxy.websiteAgent;
 
+	try {
 		requestRemote(parsed, req, res);
-
 	} catch (e) {
 		log('%s Error %s ', visitorIP, e.message);
 	}
@@ -520,7 +520,7 @@ function handleWebsite(req, res, tunnelRequest=false) {
 
 function handleRequest(req, res) {
 	if(req.url.startsWith('/')) return handleWebsite(req, res);
-	let auth = authenticateIP(req);
+	const auth = authenticateIP(req);
 	if(!auth) return  response(res, 403);
 	if(auth==407) return response(res,407,{'Proxy-Authenticate': 'Basic realm="proxy"'});
 	_handleRequest(req, res);
@@ -529,19 +529,19 @@ function handleRequest(req, res) {
 
 function handleRequestBehindTunnel(req, res) {
 	if(req.url.startsWith('/')) return handleWebsite(req, res, true);
-	let auth = authenticateNoIP(req);
+	const auth = authenticateNoIP(req);
 	if(!auth) return  response(res, 403);
 	if(auth==407) return response(res,407,{'Proxy-Authenticate': 'Basic realm="proxy"'});
 	_handleRequest(req, res);
 }
 
 function _handleRequest(req, res) {
-	var visitorIP = req.socket.remoteAddress;	
+	const visitorIP = req.socket.remoteAddress;	
 	log('%s %s %s ', visitorIP, req.method, req.url);
 	if((visitorIP=='127.0.0.1') && req.headers.host.startsWith('localhost') && req.url.startsWith('/pac')) {
-		let vpac = pacContent(req, req.url.slice(5));
+		const vpac = pacContent(req, req.url.slice(5));
 		if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
-		let pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
+		const pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
 		return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
 	}
 
@@ -553,13 +553,13 @@ function _handleRequest(req, res) {
 
 	if(isLocalHost(parsed.host)) return response(res, 403);
 
-	var headers = filterHeader(req.headers);
+	const headers = filterHeader(req.headers);
 
 	parsed.method = req.method;
 	parsed.headers = headers;
 
 	// use keep-alive http agents
-	let host = parsed.host;
+	const host = parsed.host;
 	let agent = pacProxy.httpAgents.get(host);
 	if (!agent) {
 		agent =  newAgent();
@@ -584,7 +584,7 @@ function _handleRequest(req, res) {
 
 function handleConnect(req, socket) {
 	socket.on('error', gErrorHandler);
-	let auth = authenticateIP(req);
+	const auth = authenticateIP(req);
 	if(!auth)  return socketResponse(socket,  'HTTP/1.1 403 Forbidden\r\n');
 	if(auth == 407 ) return socketResponse(socket, 'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="proxy"\r\n');
 	_handleConnect(req, socket);
@@ -593,7 +593,7 @@ function handleConnect(req, socket) {
 
 function handleConnectBehindTunnel(req, socket) {
 	socket.on('error', gErrorHandler);
-	let auth = authenticateNoIP(req);
+	const auth = authenticateNoIP(req);
 	if(!auth)  return socketResponse(socket,  'HTTP/1.1 403 Forbidden\r\n');
 	if(auth == 407 ) return socketResponse(socket, 'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="proxy"\r\n');
 	_handleConnect(req, socket);
@@ -601,66 +601,62 @@ function handleConnectBehindTunnel(req, socket) {
 
 function _handleConnect(req, socket) {
 	if(isLocalHost(req.url)) return socketResponse(socket, 'HTTP/1.1 403 Forbidden\r\n');
-	var visitorIP = req.socket.remoteAddress;
-	try {
-		log('%s %s %s ', visitorIP, req.method, req.url);
+	const visitorIP = req.socket.remoteAddress;
+	log('%s %s %s ', visitorIP, req.method, req.url);
 
-		var gotResponse = false;
+	var gotResponse = false;
 
-		let ontunnelerror = (err) => {
-			if (gotResponse) return socket.end();
-			if ('ENOTFOUND' == err.code) return socketResponse(socket, 'HTTP/1.1 404 Not Found\r\n');
-			else  return socketResponse(socket, 'HTTP/1.1 500 Internal Server Error\r\n');
-		}
-
-		let vhost = req.url.split(':')[0];
-		let vport = req.url.split(':')[1] || 443;
-
-		var ropts = {
-			host: vhost,
-			port: vport,
-			keepAlive: true
-		};
-
-		if(pacProxy.configs.proxyip != '0.0.0.0'){
-			ropts.localAddress = pacProxy.configs.proxyip;
-		}
-	
-		var transfer = (error) =>  {
-			try{
-				gotResponse = true;
-				if (error) {
-					tunnel.end();
-					socket.end();
-					return;
-				}
-				tunnel.pipe(socket);
-				socket.pipe(tunnel);
-			} catch (e) {
-				log('%s Error %s ', visitorIP, e.message);
-			}
-		};
-
-		var tunnel = net.createConnection(ropts, 
-			socketResponse(socket,  'HTTP/1.1 200 Connection established\r\n', transfer)
-		);
-
-		tunnel.on('lookup',(err, addresss) => {
-			if(isLocalIP(addresss)){
-				log('%s Error %s ', visitorIP, 'visit localIP');
-				gotResponse = true;
-				tunnel.end();
-				socket.end();
-			}
-		});
-
-		tunnel.on('error', ontunnelerror);
-		tunnel.on('end', () => socket.end());
-		socket.on('end', () => tunnel.end())
-		tunnel.setNoDelay(true);
-	} catch (e) {
-		log('%s Error %s ', visitorIP, e.message);
+	const ontunnelerror = (err) => {
+		if (gotResponse) return socket.end();
+		if ('ENOTFOUND' == err.code) return socketResponse(socket, 'HTTP/1.1 404 Not Found\r\n');
+		else  return socketResponse(socket, 'HTTP/1.1 500 Internal Server Error\r\n');
 	}
+
+	const vhost = req.url.split(':')[0];
+	const vport = req.url.split(':')[1] || 443;
+
+	const ropts = {
+		host: vhost,
+		port: vport,
+		keepAlive: true
+	};
+
+	if(pacProxy.configs.proxyip != '0.0.0.0'){
+		ropts.localAddress = pacProxy.configs.proxyip;
+	}
+
+	const transfer = (error) =>  {
+		try{
+			gotResponse = true;
+			if (error) {
+				tunnel.destroy();
+				socket.end();
+				return;
+			}
+			tunnel.pipe(socket);
+			socket.pipe(tunnel);
+		} catch (e) {
+			log('%s Error %s ', visitorIP, e.message);
+		}
+	};
+
+	var tunnel = net.createConnection(ropts, 
+		socketResponse(socket,  'HTTP/1.1 200 Connection established\r\n', transfer)
+	);
+
+	tunnel.on('lookup',(err, addresss) => {
+		if(isLocalIP(addresss)){
+			log('%s Error %s ', visitorIP, 'visit localIP');
+			gotResponse = true;
+			tunnel.destroy();
+			socket.end();
+		}
+	});
+
+	tunnel.on('error', ontunnelerror);
+	tunnel.on('end', () => socket.end());
+	socket.on('end', () => tunnel.destroy())
+	tunnel.setNoDelay(true);
 }
 
 /**
@@ -681,10 +677,10 @@ function handleWebsocket(ws, req) {
 	let duplex = pacProxy.WebSocket.createWebSocketStream(ws);
 	try{
 		var tunnel = net.createConnection(tolocal)
-		duplex.on('close', () => tunnel.end());
-		duplex.on('error', () => tunnel.end());
-		tunnel.on('end', () => ws.close(1000));
-		tunnel.on('error', () => ws.close(1000));  
+		duplex.on('close', () => tunnel.destroy());
+		duplex.on('error', () => tunnel.destroy());
+		tunnel.on('end', () => {duplex.destroy(); ws.close(1000)});
+		tunnel.on('error', () => {duplex.destroy(); ws.close(1000)}); 
 		duplex.pipe(tunnel);
 		tunnel.pipe(duplex);
 	} catch (e) {
