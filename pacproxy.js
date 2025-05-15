@@ -665,8 +665,8 @@ function _handleConnect(req, socket) {
 
 function handleWebsocket(ws, req) {
 	if(!req.url.startsWith( pacProxy.configs.paclink)) return pacProxy.configs.onconnection(ws,req);
-	var visitorIP = req.socket.remoteAddress;
-	let suburl = req.url.slice(pacProxy.configs.paclink.length);
+	const visitorIP = req.socket.remoteAddress;
+	const suburl = req.url.slice(pacProxy.configs.paclink.length);
 	log('%s %s %s ', visitorIP, 'WSS', suburl);
 
 	if(!suburl) var tolocal = { host: '127.0.0.1', port: pacProxy.configs.wssport, keepAlive: true};
@@ -674,9 +674,9 @@ function handleWebsocket(ws, req) {
 	else if(suburl.toLowerCase() == '/pac')  var tolocal = { host: '127.0.0.1', port: pacProxy.configs.pacport, keepAlive: true};
 	else return ws.close(1011, "authentication failed");
 
-	let duplex = pacProxy.WebSocket.createWebSocketStream(ws);
+	const duplex = pacProxy.WebSocket.createWebSocketStream(ws);
 	try{
-		var tunnel = net.createConnection(tolocal)
+		const tunnel = net.createConnection(tolocal)
 		duplex.on('close', () => tunnel.destroy());
 		duplex.on('error', () => tunnel.destroy());
 		tunnel.on('end', () => {duplex.destroy(); ws.close(1000)});
