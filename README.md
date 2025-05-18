@@ -56,6 +56,10 @@ node runproxy.js [网站配置文件] [监听端口号]
 
 sudo pm2 start ./runproxy.js -- ./example.site.domain/production.cfg 
 
+* Windows下用pm2：
+
+pm2 start ./runproxy.js -- -- ./example.site.domain/production.cfg 
+
 * 也可以用nohup:
 
 nohup sudo ./runproxy.js ./example.site.domain/production.cfg &
