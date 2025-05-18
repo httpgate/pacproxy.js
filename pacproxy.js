@@ -193,6 +193,7 @@ function initInnerServer() {
 		var ws = new pacProxy.WebSocket.Server({ server: pacProxy.server });
 		ws.on("connection", handleWebsocket);
 	});
+	pacProxy.innerServer.on('error', gErrorHandler);
 
 	if(!pacProxy.configs.https) return;
 	
@@ -204,6 +205,7 @@ function initInnerServer() {
 		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss+tls url:  \r\n%s\r\n',
 		pacProxy.configs.tlsport, getShareLink('ws')+'/tls');
 	});
+	pacProxy.tlsServer.on('error', gErrorHandler);
 
 	pacProxy.pacServer = createServer();
 	pacProxy.pacServer.on('connect', handleConnectBehindTunnel);
@@ -213,6 +215,7 @@ function initInnerServer() {
 		console.log('\r\npac proxy server listening on port %d,\r\nshare your wss+pac url:  \r\n%s\r\n',
 		pacProxy.configs.pacport, getShareLink('ws')+'/pac');
 	});
+	pacProxy.pacServer.on('error', gErrorHandler);
 }
 
 function run() {
