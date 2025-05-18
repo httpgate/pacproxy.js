@@ -687,3 +687,5 @@ function handleWebsocket(ws, req) {
 		log('%s Error %s ', visitorIP, e.message);
 	}
 }
+
+process.on('uncaughtException', gErrorHandler)
