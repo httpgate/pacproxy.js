@@ -68,5 +68,5 @@ nohup sudo ./runproxy.js ./example.site.domain/production.cfg &
 
 ## 3. 在手机上运行
 
-参见 [pacproxy迷你服务器](https://github.com/httpgate/pacproxy-miniserver)
+参见 [用Android的Termux运行pacproxy服务](https://github.com/httpgate/resources/blob/main/android_termux_run_pacproxy.md)
 
