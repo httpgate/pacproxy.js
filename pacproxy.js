@@ -89,6 +89,7 @@ const path = require('path');
  */
 const normalBrowser = { 'firefox' : ' Firefox', 'chrome' : ' Chrome', 'edge' : ' Edg', 'opera' : ' OPR' } ;
 const pacDirect = 'function FindProxyForURL(url, host) { return "DIRECT";}';
+const pacHeaders = {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store'};
 
 this.configs = false;
 this.server = false;
@@ -132,8 +133,12 @@ exports.startServer = startServer;
  */
 function proxy(configs) {
 	if(!configs) configs = configsInCode;
-	else merge(configs, configsInCode);
-
+	else {
+		configsInCode.paclink = '';
+		configsInCode.pacpass = [];
+		merge(configs, configsInCode);
+	}
+	
 	pacProxy.configs = configs;
 	pacProxy.ipMilliSeconds = pacProxy.configs.iphours * 3600 * 1000;
 	if(pacProxy.configs.website) pacProxy.websiteParsed = new URL(pacProxy.configs.website);
@@ -141,6 +146,7 @@ function proxy(configs) {
 	else if(pacProxy.websiteParsed.protocol && (pacProxy.websiteParsed.protocol=='https:')) pacProxy.websiteAgent = newAgent(true);
 	
 	if(!pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
+	if(pacProxy.configs.pacpass && pacProxy.configs.pacpass[0] && !pacProxy.configs.pacpass[0].startsWith('/')) pacProxy.configs.pacpass[0] = '/' + pacProxy.configs.pacpass[0];
 
 	if(pacProxy.configs.pacpass && pacProxy.configs.pacpass.length==3) pacProxy.proxyAuth = generateBasicAuth(pacProxy.configs.pacpass[1],pacProxy.configs.pacpass[2]);
 
@@ -226,12 +232,12 @@ function run() {
 function getConfigs(){
 	if(!process.argv[2]){ 
 		if(process.env.PORT) configsInCode.port = process.env.PORT;
-		return configsInCode;
+		return false;
 	}
 
 	if(!isNaN(process.argv[2])){
 		configsInCode.port = process.argv[2];
-		return configsInCode;
+		return false;
 	}
 
 	let configPath = path.resolve(process.cwd(), process.argv[2]);
@@ -471,14 +477,6 @@ function handleWebsite(req, res, tunnelRequest=false) {
 	const visitorIP = req.socket.remoteAddress;
 	log('%s %s %s ', visitorIP, req.headers.host, req.url);
 
-	try{
-		var parsed = new URL('https://'+pacProxy.configs.domain + req.url);
-	} catch (e) {
-		return  response(res, 403);
-	}
-
-	const pacHeaders = {'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store'};
-
 	if ((!tunnelRequest) && (pacProxy.configs.iphours>0) && pacProxy.configs.paclink && req.url.startsWith(pacProxy.configs.paclink)) {
 		const vpac = pacContent(req, req.url.slice(pacProxy.configs.paclink.length+1));
 		if(vpac==pacDirect) return response(res,200,pacHeaders,vpac);
@@ -499,6 +497,12 @@ function handleWebsite(req, res, tunnelRequest=false) {
 	if(!websiteAuthentication(req)) return response(res,401,{'WWW-Authenticate': 'Basic realm="' + pacProxy.configs.website_auth[0] + '"'});
 
 	if(!pacProxy.configs.website) return pacProxy.configs.onrequest(req, res);
+
+	try{
+		var parsed = new URL('https://'+pacProxy.configs.domain + req.url);
+	} catch (e) {
+		return  response(res, 403);
+	}
 
 	const headers = filterHeader(req.headers);
 	if (parsed.pathname == '/') parsed.pathname = pacProxy.websiteParsed.pathname;
@@ -543,9 +547,9 @@ function _handleRequest(req, res) {
 	log('%s %s %s ', visitorIP, req.method, req.url);
 	if((visitorIP=='127.0.0.1') && req.headers.host.startsWith('localhost') && req.url.startsWith('/pac')) {
 		const vpac = pacContent(req, req.url.slice(5));
-		if(vpac==pacDirect) return response(res,200,{'Content-Type': 'text/plain'},vpac);
+		if(vpac==pacDirect) return response(res,200,pacHeaders,vpac);
 		const pacjs = `function FindProxyForURL(url, host) { return "PROXY ${req.headers.host}";}`;
-		return response(res,200,{'Content-Type': 'text/plain'}, pacjs);
+		return response(res,200,pacHeaders,pacjs);
 	}
 
 	try {

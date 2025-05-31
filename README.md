@@ -10,7 +10,7 @@
 
 ## 推荐
 
-推荐用prcproxy安全的访问以下网站：
+推荐用pacproxy安全的访问以下网站：
 * 明慧网：https://www.minghui.org
 * 干净世界：https://www.ganjing.com
 * 神韵作品: https://shenyunzuopin.com
@@ -64,7 +64,7 @@ pm2 start ./runproxy.js -- -- ./example.site.domain/production.cfg
 
 nohup sudo ./runproxy.js ./example.site.domain/production.cfg &
 
-* 推荐用pm2[直接运行pacproxy-js的npm库](https://github.com/httpgate/resouces/tree/main/pm2_Run_Npm_Package.md)
+* 推荐用pm2直接运行pacproxy-js的npm库, [参见](https://github.com/httpgate/resouces/tree/main/pm2_Run_Npm_Package.md)
 
 ## 3. 在手机上运行
 
