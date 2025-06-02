@@ -145,7 +145,7 @@ function proxy(configs) {
 	if(pacProxy.websiteParsed.host && isLocalHost(pacProxy.websiteParsed.host)) pacProxy.configs.website = false;
 	else if(pacProxy.websiteParsed.protocol && (pacProxy.websiteParsed.protocol=='https:')) pacProxy.websiteAgent = newAgent(true);
 	
-	if(!pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
+	if(pacProxy.configs.paclink && !pacProxy.configs.paclink.startsWith('/')) pacProxy.configs.paclink = '/' + pacProxy.configs.paclink;
 	if(pacProxy.configs.pacpass && pacProxy.configs.pacpass[0] && !pacProxy.configs.pacpass[0].startsWith('/')) pacProxy.configs.pacpass[0] = '/' + pacProxy.configs.pacpass[0];
 
 	if(pacProxy.configs.pacpass && pacProxy.configs.pacpass.length==3) pacProxy.proxyAuth = generateBasicAuth(pacProxy.configs.pacpass[1],pacProxy.configs.pacpass[2]);
