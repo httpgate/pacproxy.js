@@ -176,7 +176,7 @@ function bindServer(server) {
 	}
 	server.listen(pacProxy.configs.port, pacProxy.configs.proxyip, () => {
 		console.log('\r\npac proxy server listening on port %d,',server.address().port);
-		if(!pacProxy.configs.behindTunnel)	console.log('\r\nshare your pac url: \r\n%s', getShareLink('http'));
+		if(!pacProxy.configs.behindTunnel && pacProxy.configs.paclink)	console.log('\r\nshare your pac url: \r\n%s', getShareLink('http'));
 
 		if(pacProxy.configs.pacpass.length!==3) return;
 		console.log(
