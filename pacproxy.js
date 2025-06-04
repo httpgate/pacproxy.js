@@ -162,7 +162,7 @@ function startServer() {
 	bindServer(server);
 	pacProxy.server = server;
 
-	if(pacProxy.configs.websocket) initInnerServer();
+	if(pacProxy.configs.websocket && pacProxy.configs.paclink) initInnerServer();
 	return server;
 }
 
@@ -671,6 +671,7 @@ function _handleConnect(req, socket) {
  */
 
 function handleWebsocket(ws, req) {
+	if(!pacProxy.configs.paclink) return pacProxy.configs.onconnection(ws,req);
 	if(!req.url.startsWith( pacProxy.configs.paclink)) return pacProxy.configs.onconnection(ws,req);
 	const visitorIP = req.socket.remoteAddress;
 	const suburl = req.url.slice(pacProxy.configs.paclink.length);
